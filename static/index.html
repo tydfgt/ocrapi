@@ -96,7 +96,7 @@ input[type=file]{display:none}.refresh{font-size:10px;color:#64748b;cursor:point
   </div>
 </div>
 
-<div class="footer">PaddleOCR C++ ✦ Jetson Orin Nano ✦ PP-OCRv5 Mobile ✦ 平均 5.55s/图</div>
+<div class="footer">PaddleOCR C++ ✦ Jetson Orin Nano ✦ PP-OCRv5 Mobile</div>
 
 <script>
 let visOn = true;
@@ -146,13 +146,11 @@ async function upload(file) {
   document.getElementById('batchStat').style.display = 'none';
   const fd = new FormData(); fd.append('file', file);
   try {
-    const t0 = performance.now();
     const r = await fetch('/ocr', { method: 'POST', body: fd }), d = await r.json();
-    const wall = ((performance.now() - t0) / 1000).toFixed(2);
     if (d.error) { document.getElementById('results').innerHTML = `<p style="color:#f87171">❌ ${d.error}</p>`; return; }
     document.getElementById('batchStat').style.display = 'flex';
     document.getElementById('batchStat').innerHTML =
-      `<span>检测 <b>${d.count}</b> 文本</span><span>总耗时 <b>${wall}s</b></span><span>推理 <b>${d.time_s}s</b></span>`;
+      `<span>检测 <b>${d.count}</b> 个文本区域</span>`;
     let h = '';
     (d.texts || []).forEach((t, i) => {
       const s = (d.scores || [])[i] ?? 0;
