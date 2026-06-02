@@ -1,0 +1,2 @@
+distro
+smbus2

@@ -1,0 +1,122 @@
+% ============================================================
+%  软件著作权登记申请表 — LaTeX 模板
+%  编译方式：xelatex 01-申请表.tex
+% ============================================================
+
+\documentclass[12pt,a4paper]{ctexart}
+
+% ---------- 页面设置 ----------
+\usepackage[top=2.54cm, bottom=2.54cm, left=3.18cm, right=3.18cm]{geometry}
+\usepackage{longtable, booktabs, array}
+\usepackage{enumitem}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{xcolor}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue
+}
+
+% ---------- 标题 ----------
+\title{\heiti\zihao{2} 计算机软件著作权登记申请表}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+% ============================================================
+\section*{一、软件基本信息}
+
+\begin{longtable}{|p{3.5cm}|p{11cm}|}
+\hline
+软件全称 & 【填写软件全称，如：XXX管理系统V1.0】 \\
+\hline
+软件简称 & 【如有简称则填写，无则留空】 \\
+\hline
+版本号   & 【如：V1.0】 \\
+\hline
+分类号   & 【如：30200-0000】 \\
+\hline
+软件类型 & $\square$ 原创 \quad $\square$ 修改（含翻译、合成） \quad $\square$ 继受 \\
+\hline
+\end{longtable}
+
+% ============================================================
+\section*{二、著作权人信息}
+
+\begin{longtable}{|p{3.5cm}|p{11cm}|}
+\hline
+著作权人名称 & 【公司全称 / 个人姓名】 \\
+\hline
+证件类型     & $\square$ 营业执照 \quad $\square$ 身份证 \quad $\square$ 其他 \\
+\hline
+证件号码     & 【统一社会信用代码 / 身份证号】 \\
+\hline
+国籍/省份   & 【中国 / 省份名称】 \\
+\hline
+详细地址     & 【通信地址】 \\
+\hline
+联系人       & 【姓名】 \\
+\hline
+联系电话     & 【手机号 / 座机号】 \\
+\hline
+电子邮箱     & 【邮箱地址】 \\
+\hline
+\end{longtable}
+
+% ============================================================
+\section*{三、开发信息}
+
+\begin{longtable}{|p{3.5cm}|p{11cm}|}
+\hline
+开发完成日期 & 【如：2025年01月15日】 \\
+\hline
+首次发表日期 & 【如：2025年02月01日，未发表则填“未发表”】 \\
+\hline
+开发方式     & $\square$ 独立开发 \quad $\square$ 合作开发 \quad $\square$ 委托开发 \quad $\square$ 职务开发 \\
+\hline
+开发语言     & 【如：Java、Python、JavaScript、C\# 等】 \\
+\hline
+代码行数     & 【如：约 15,000 行】 \\
+\hline
+运行平台     & 【如：Windows / Linux / macOS / Web / Android / iOS】 \\
+\hline
+数据库       & 【如：MySQL 8.0 / PostgreSQL / MongoDB】 \\
+\hline
+\end{longtable}
+
+% ============================================================
+\section*{四、权利范围}
+
+\begin{longtable}{|p{3.5cm}|p{11cm}|}
+\hline
+权利取得方式 & $\square$ 原始取得 \quad $\square$ 继受取得 \\
+\hline
+权利范围     & $\square$ 全部权利 \quad $\square$ 部分权利（请注明）： \\
+\hline
+\end{longtable}
+
+% ============================================================
+\section*{五、软件功能简述}
+
+【用 200--500 字简要描述软件的主要功能、技术特点和适用场景，包括但不限于：
+
+\begin{enumerate}[label=(\arabic*)]
+    \item 软件的用途和目标用户群体
+    \item 核心功能模块（列出 3--6 个主要功能）
+    \item 技术架构特点（如 B/S 架构、微服务、前后端分离等）
+    \item 主要技术栈和框架
+    \item 软件解决的业务痛点
+\end{enumerate}
+
+\textbf{示例：}
+
+本软件是一款面向中小企业的XXX管理系统，采用B/S架构，基于Spring Boot + Vue.js框架开发。
+主要功能包括：用户管理、订单管理、库存管理、数据报表、系统设置等模块。
+系统支持多角色权限管理，具有良好的可扩展性和安全性。】
+
+\end{document}

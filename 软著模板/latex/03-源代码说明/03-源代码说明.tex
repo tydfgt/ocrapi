@@ -1,0 +1,230 @@
+% ============================================================
+%  源代码文档说明 — LaTeX 模板
+%  编译方式：xelatex 03-源代码说明.tex
+%  注意：实际源代码需单独整理为 PDF 提交，本文件仅为规范说明
+% ============================================================
+
+\documentclass[12pt,a4paper]{ctexart}
+
+% ---------- 页面设置 ----------
+\usepackage[top=2.54cm, bottom=2.54cm, left=3.18cm, right=3.18cm]{geometry}
+\usepackage{longtable, booktabs, array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{fancyhdr}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=black,
+  urlcolor=blue
+}
+
+% ---------- 代码块样式 ----------
+\lstset{
+  basicstyle=\ttfamily\zihao{-5},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2
+}
+
+\title{\heiti\zihao{2} 源代码文档提交规范说明}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+% ============================================================
+\section{源代码提交规范}
+
+\subsection{总体要求}
+\begin{itemize}
+    \item 提交的源程序需为\textbf{完整代码}，具有原始性，不可包含自动生成代码
+    \item 总共提交 \textbf{60 页} 源代码（前 30 页 + 后 30 页）
+    \item 每页代码不少于 \textbf{50 行}（建议设置为 55 行/页）
+    \item 页眉标注软件名称及版本号，页脚标注页码
+\end{itemize}
+
+\subsection{格式要求}
+\begin{longtable}{|p{3.5cm}|p{9.5cm}|}
+\hline
+\textbf{项目}   & \textbf{要求} \\
+\hline
+纸张大小 & A4 \\
+\hline
+页边距   & 上下 2.54cm，左右 3.18cm \\
+\hline
+字体     & 等宽字体（如 Consolas、Courier New、Source Code Pro） \\
+\hline
+字号     & 小五号或五号（9pt -- 10.5pt） \\
+\hline
+行间距   & 单倍行距 \\
+\hline
+页眉     & 软件全称 + 版本号（居中） \\
+\hline
+页脚     & 第 X 页 / 共 60 页（居中） \\
+\hline
+\end{longtable}
+
+\subsection{内容要求}
+\begin{itemize}
+    \item \textbf{前 30 页}：从程序开头选取，一般为软件的主入口、核心初始化代码
+    \item \textbf{后 30 页}：从程序末尾选取，一般为工具函数、配置、底层实现代码
+    \item 代码应体现\textbf{原创性}和\textbf{完整性}，避免全篇注释或无意义空行
+\end{itemize}
+
+% ============================================================
+\section{源代码整理方法}
+
+\subsection{推荐整理流程}
+\begin{enumerate}
+    \item \textbf{汇总源文件}：将项目所有手写源代码文件整理到一个目录
+    \item \textbf{去除冗余}：排除第三方库、node\_modules、自动生成代码等
+    \item \textbf{排序}：按代码重要性/层级由核心到外围排序
+    \item \textbf{拼接}：将所有源文件拼接为一个文档
+    \item \textbf{分页}：设置页码格式，确保每页 50+ 行
+    \item \textbf{标记}：在每段文件开头添加注释标明文件名
+\end{enumerate}
+
+\subsection{不纳入源代码的内容}
+\begin{itemize}
+    \item 第三方开源库代码（如 jQuery、Bootstrap 等）
+    \item 自动生成代码（如 protobuf、gRPC、MyBatis 生成器等）
+    \item 框架核心代码（如 Spring Boot 内核、.NET 运行时等）
+    \item node\_modules / vendor 等依赖目录
+    \item 编译产物（\texttt{.class}、\texttt{.dll}、\texttt{.exe}、\texttt{dist/} 等）
+    \item 配置文件中的服务器地址、密钥等敏感信息（可脱敏后保留）
+\end{itemize}
+
+% ============================================================
+\section{源代码文档页面示例}
+
+以下为源代码文档的页面格式示例（使用 listings 宏包模拟）：
+
+\newpage
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{【软件全称 V1.0】}
+\fancyfoot[C]{第 \thepage{} 页 / 共 60 页}
+\renewcommand{\headrulewidth}{0.4pt}
+\setcounter{page}{1}
+
+\begin{lstlisting}[language=Java, caption={示例：Application.java 和 UserController.java}]
+// ===== src/main/java/com/example/Application.java =====
+package com.example;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Application.class, args);
+    }
+}
+
+// ===== src/main/java/com/example/controller/UserController.java =====
+package com.example.controller;
+
+import com.example.entity.User;
+import com.example.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    @Autowired
+    private UserService userService;
+
+    @GetMapping
+    public List<User> list() {
+        return userService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public User getById(@PathVariable Long id) {
+        return userService.findById(id);
+    }
+
+    @PostMapping
+    public User create(@RequestBody User user) {
+        return userService.save(user);
+    }
+
+    @PutMapping("/{id}")
+    public User update(@PathVariable Long id, @RequestBody User user) {
+        user.setId(id);
+        return userService.update(user);
+    }
+
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        userService.delete(id);
+    }
+}
+\end{lstlisting}
+
+% ============================================================
+\section{提取源代码脚本（辅助工具）}
+
+以下 Python 脚本可帮助自动提取并格式化源代码：
+
+\begin{lstlisting}[language=Python, caption={extract\_sources.py}]
+import os
+import glob
+
+# 配置
+PROJECT_DIR = "/path/to/your/project"
+OUTPUT_FILE = "source_code_document.txt"
+EXTENSIONS = ["*.java", "*.kt", "*.py", "*.js", "*.ts", "*.vue", "*.cs"]
+EXCLUDE_DIRS = ["node_modules", "vendor", ".git",
+                "dist", "build", "target", "__pycache__"]
+
+def collect_sources():
+    files = []
+    for ext in EXTENSIONS:
+        for filepath in glob.glob(f"{PROJECT_DIR}/**/{ext}", recursive=True):
+            if not any(ex in filepath for ex in EXCLUDE_DIRS):
+                files.append(filepath)
+    return sorted(files)
+
+def generate_document(files):
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as out:
+        for filepath in files:
+            rel_path = os.path.relpath(filepath, PROJECT_DIR)
+            out.write(f"\n// ===== {rel_path} =====\n\n")
+            with open(filepath, "r", encoding="utf-8",
+                      errors="ignore") as f:
+                out.write(f.read())
+            out.write("\n")
+    print(f"done: {OUTPUT_FILE}, {len(files)} files")
+
+if __name__ == "__main__":
+    files = collect_sources()
+    generate_document(files)
+\end{lstlisting}
+
+% ============================================================
+\section{检查清单}
+
+\begin{itemize}
+    \item[\checkedbox] 源代码共 60 页（前后各 30 页）
+    \item[\checkedbox] 每页代码不少于 50 行
+    \item[\checkedbox] 代码为手写原创代码，不含第三方代码
+    \item[\checkedbox] 页眉标注了软件名称和版本号
+    \item[\checkedbox] 页脚标注了页码（第 X 页/共 60 页）
+    \item[\checkedbox] 每段文件开头标注了文件名
+    \item[\checkedbox] 软件名称、版本号与其他材料一致
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,6 @@
+[console_scripts]
+jetson_config = jtop.jetson_config:main
+jetson_release = jtop.jetson_release:main
+jetson_swap = jtop.jetson_swap:main
+jtop = jtop.__main__:main
+

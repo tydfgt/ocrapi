@@ -1,0 +1,567 @@
+% ============================================================
+%  PaddleOCR 智能文字识别系统 V1.0 — 软件设计说明书
+%  编译方式: xelatex 04-设计说明书.tex
+%  截图放入 ./screenshots/ 目录
+% ============================================================
+
+\documentclass[12pt,a4paper]{ctexart}
+
+\usepackage[top=2.54cm, bottom=2.54cm, left=3.18cm, right=3.18cm]{geometry}
+\usepackage{graphicx}
+\usepackage{longtable, booktabs, array}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{listings}
+
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue}
+
+\lstset{basicstyle=\ttfamily\zihao{-5},numbers=left,numberstyle=\tiny\color{gray},frame=single,breaklines=true,showstringspaces=false,tabsize=2}
+
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[C]{PaddleOCR 智能文字识别系统 V1.0 设计说明书}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\begin{document}
+
+% ==================== 封面 ====================
+\begin{titlepage}
+\centering\vspace*{3cm}
+{\heiti\zihao{1} PaddleOCR 智能文字识别系统}\\[1cm]
+{\zihao{2} 软件设计说明书}\\[2.5cm]
+\begin{tabular}{rl}
+\textbf{版本号：}   & V1.0 \\
+\textbf{著作权人：} & 屈雪松 \\
+\textbf{编制日期：} & 2026年6月2日 \\
+\textbf{运行平台：} & NVIDIA Jetson Orin Nano Super \\
+\end{tabular}
+\vfill
+\noindent\rule{\textwidth}{0.4pt}
+{\zihao{5} 本文档为 PaddleOCR 智能文字识别系统的软件设计说明书，\\详细描述了系统的架构设计、模块划分、接口规范和部署方案。}
+\end{titlepage}
+
+\tableofcontents\newpage
+
+% ==================== 1. 引言 ====================
+\section{引言}
+
+\subsection{编写目的}
+本文档为\textbf{PaddleOCR 智能文字识别系统 V1.0}的软件设计说明书，旨在详细描述系统的架构设计、模块划分、接口规范、核心算法流程及部署方案，供开发、维护和著作权审查参考。
+
+\subsection{项目概述}
+PaddleOCR 智能文字识别系统是一套基于 NVIDIA Jetson Orin Nano 边缘计算平台的实时 OCR 服务。系统利用 PaddlePaddle 深度学习框架的 C++ 推理引擎，结合 PP-OCRv5 模型，在 ARM 架构的边缘设备上实现高效、低延迟的图片文字检测与识别。
+
+\textbf{主要功能特性}：
+\begin{itemize}
+    \item 图片文字检测与识别：上传图片，返回文字区域坐标及置信度
+    \item GPU 加速推理：利用 Jetson Ampere GPU（1024 CUDA cores）进行 CUDA 推理
+    \item RESTful API 服务：基于 FastAPI 的 HTTP 接口
+    \item Web 可视化前端：拖拽上传、结果展示、硬件监控面板
+    \item 实时硬件监控：通过 jtop 采集 GPU/CPU/温度/功耗
+    \item 启动预热：服务启动时自动预热 GPU
+\end{itemize}
+
+\subsection{定义与缩写}
+\begin{longtable}{|p{3cm}|p{10cm}|}\hline
+\textbf{缩写/术语} & \textbf{全称/说明} \\\hline
+OCR & Optical Character Recognition，光学字符识别 \\\hline
+PP-OCRv5 & PaddlePaddle OCR 第5代模型 \\\hline
+Paddle Inference & 飞桨深度学习框架的 C++ 推理引擎 \\\hline
+CUDA & NVIDIA 并行计算平台 \\\hline
+cuDNN & NVIDIA 深度神经网络加速库 \\\hline
+TensorRT & NVIDIA 深度学习推理优化引擎 \\\hline
+L4T & Linux for Tegra，Jetson 操作系统 \\\hline
+FastAPI & Python 高性能异步 Web 框架 \\\hline
+jtop & jetson-stats 的 Python 接口 \\\hline
+\end{longtable}
+
+% ==================== 2. 运行环境与构建 ====================
+\section{运行环境与构建说明}
+
+\subsection{硬件环境}
+\begin{longtable}{|p{5cm}|p{8cm}|}\hline
+\textbf{项目} & \textbf{参数} \\\hline
+设备型号 & NVIDIA Jetson Orin Nano Super (P3767-0005) \\\hline
+CPU & 6核 ARM Cortex-A78AE @ 1.5GHz \\\hline
+GPU & Ampere GA10B, 1024 CUDA cores, SM 8.7 \\\hline
+内存 & 8GB LPDDR5（CPU/GPU 统一内存） \\\hline
+存储 & 238GB NVMe SSD \\\hline
+Swap & 11GB（3.7GB zram + 8GB SSD swap） \\\hline
+功耗模式 & MAXN\_SUPER（最高性能） \\\hline
+\end{longtable}
+
+\subsection{软件环境}
+\begin{longtable}{|p{4cm}|p{3.5cm}|p{5.5cm}|}\hline
+\textbf{组件} & \textbf{版本} & \textbf{用途} \\\hline
+JetPack / L4T & R36.5.0 / 6.0 & Jetson 系统平台 \\\hline
+CUDA & 12.6.68 & GPU 并行计算 \\\hline
+cuDNN & 9.3.0 & 深度神经网络加速 \\\hline
+TensorRT & 10.3.0.30 & 推理优化（预留） \\\hline
+OpenCV & 4.10.0（自编译 CUDA 版） & 图像处理 \\\hline
+GCC & 11.4.0 & C++ 编译器 \\\hline
+CMake & 3.26.4 & 构建工具 \\\hline
+Python & 3.10.12 & API 服务 \\\hline
+FastAPI & 0.136.3 & Web 框架 \\\hline
+uvicorn & 0.48.0 & ASGI 服务器 \\\hline
+jetson-stats & 4.3.2 & 硬件监控（jtop） \\\hline
+psutil & 7.2.2 & 系统信息 \\\hline
+\end{longtable}
+
+\subsection{环境初始化检查}
+\begin{lstlisting}[language=bash, caption={环境检查命令}]
+# L4T 版本
+cat /etc/nv_tegra_release
+# 输出: # R36 (release), REVISION: 5.0
+
+# CUDA 编译器
+nvcc --version
+# 输出: Build cuda_12.6.r12.6/compiler.34714021_0
+
+# cuDNN 状态
+dpkg -l | grep cudnn
+# 输出: libcudnn9-cuda-12  9.3.0.75-1  arm64
+
+# TensorRT 状态
+dpkg -l | grep tensorrt
+# 输出: libnvinfer10  10.3.0.30-1+cuda12.5  arm64
+
+# OpenCV
+python3 -c "import cv2; print(cv2.__version__)"
+# 输出: 4.10.0
+
+# 内存
+free -h
+# 输出: Mem: 7.4Gi  Swap: 11Gi
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/01-env-check.png}
+\caption{环境检查：L4T版本、CUDA、cuDNN、TensorRT、OpenCV 确认}
+\label{fig:env-check}
+\end{figure}
+
+\subsection{获取源码与预编译推理库}
+
+\subsubsection{克隆 PaddleOCR 源码}
+\begin{lstlisting}[language=bash, caption={从 Gitee 克隆 PaddleOCR 源码}]
+mkdir -p ~/ocrcplus && cd ~/ocrcplus
+git clone --depth=1 https://gitee.com/paddlepaddle/PaddleOCR.git
+# 输出: Cloning into 'PaddleOCR'... done.
+\end{lstlisting}
+
+\subsubsection{下载 Paddle Inference 推理库}
+\begin{lstlisting}[language=bash, caption={下载 Jetson Orin 专用预编译推理库}]
+wget "https://paddle-inference-lib.bj.bcebos.com/3.0.0/cxx_c/Jetson/jetpack5.1.2_gcc9.4/orin/paddle_inference_install_dir.tgz"
+tar xzf paddle_inference_install_dir.tgz
+cat paddle_inference_install_dir/version.txt
+\end{lstlisting}
+
+推理库版本信息：
+\begin{lstlisting}[caption={Paddle Inference 版本信息}]
+Paddle version: 3.0.0
+WITH_GPU: ON
+CUDA version: 11.4
+CUDNN version: v8.6
+WITH_TENSORRT: ON
+TensorRT version: v8.5.2.2
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/02-inference-lib.png}
+\caption{下载并解压 Paddle Inference 预编译推理库}
+\label{fig:inference-lib}
+\end{figure}
+
+\subsection{编译 C++ 推理引擎}
+
+\subsubsection{CMake 配置}
+\begin{lstlisting}[language=bash, caption={CMake 构建配置}]
+cd ~/ocrcplus/PaddleOCR/deploy/cpp_infer
+mkdir build && cd build
+
+cmake .. \
+  -DPADDLE_LIB=~/ocrcplus/paddle_inference_install_dir \
+  -DOPENCV_DIR=/usr/local \
+  -DCUDA_LIB=/usr/local/cuda-12.6/lib64 \
+  -DCUDNN_LIB=/usr/lib/aarch64-linux-gnu \
+  -DWITH_MKL=OFF -DWITH_GPU=ON \
+  -DWITH_STATIC_LIB=OFF -DUSE_FREETYPE=OFF
+\end{lstlisting}
+
+CMake 配置关键输出：
+\begin{lstlisting}[caption={CMake 配置输出}]
+-- The CXX compiler identification is GNU 11.4.0
+-- Found CUDA: /usr/local/cuda-12.6 (found version "12.6")
+-- Found OpenCV: /usr/local (found version "4.10.0")
+-- Configuring done (4.2s)
+-- Generating done (0.3s)
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/03-cmake-config.png}
+\caption{CMake 配置过程：检测 CUDA 12.6 + OpenCV 4.10.0}
+\label{fig:cmake}
+\end{figure}
+
+\subsubsection{Make 编译}
+\begin{lstlisting}[language=bash, caption={Make 编译（-j2 防止 8GB 内存 OOM）}]
+make -j2
+\end{lstlisting}
+
+编译进度：
+\begin{lstlisting}[caption={编译输出}]
+[ 30%] Building src/base/base_predictor.cc.o
+[ 50%] Building src/common/static_infer.cc.o
+[ 70%] Building src/modules/text_detection/predictor.cc.o
+[ 90%] Building src/modules/text_recognition/predictor.cc.o
+[100%] Linking CXX executable ppocr
+[100%] Built target ppocr
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/04-compile.png}
+\caption{C++ 推理引擎编译完成：生成 ppocr 可执行文件（56MB）}
+\label{fig:compile}
+\end{figure}
+
+\subsubsection{编译产物验证}
+\begin{lstlisting}[language=bash, caption={验证编译产物}]
+ls -lh ./ppocr          # -rwxrwxr-x  56M  ppocr
+file ./ppocr            # ELF 64-bit LSB pie executable, ARM aarch64
+ldd ./ppocr | grep -E "not found|cuda|paddle|opencv"
+# libpaddle_inference.so => ...（已找到）
+# libopencv_core.so.410 => /usr/local/lib/...（已找到）
+\end{lstlisting}
+
+\subsection{Python 环境配置}
+\begin{lstlisting}[language=bash, caption={Python 虚拟环境与依赖安装}]
+cd ~/ocrcplus
+python3 -m venv venv
+source venv/bin/activate
+pip install fastapi uvicorn python-multipart Pillow psutil jetson-stats aiofiles aiohttp
+\end{lstlisting}
+
+\begin{longtable}{|p{5cm}|p{3cm}|p{5cm}|}\hline
+\textbf{包名} & \textbf{版本} & \textbf{用途} \\\hline
+fastapi & 0.136.3 & RESTful API 框架 \\\hline
+uvicorn & 0.48.0 & ASGI 服务器 \\\hline
+python-multipart & 0.0.30 & 文件上传解析 \\\hline
+Pillow & 12.2.0 & 图像处理 \\\hline
+psutil & 7.2.2 & 系统资源监控 \\\hline
+jetson-stats & 4.3.2 & Jetson 硬件采集 \\\hline
+aiofiles & 25.1.0 & 异步文件读写 \\\hline
+aiohttp & 3.14.0 & 异步 HTTP 客户端 \\\hline
+\end{longtable}
+
+\subsection{下载 OCR 推理模型}
+\begin{lstlisting}[language=bash, caption={下载 PP-OCRv5 Mobile 模型}]
+mkdir -p ~/ocrcplus/models && cd ~/ocrcplus/models
+# 检测模型 (4.8MB)
+wget "https://.../PP-OCRv5_mobile_det_infer.tar" && tar xf PP-OCRv5_mobile_det_infer.tar
+# 识别模型 (17MB)
+wget "https://.../PP-OCRv5_mobile_rec_infer.tar" && tar xf PP-OCRv5_mobile_rec_infer.tar
+\end{lstlisting}
+
+每个模型目录含 3 个文件：inference.pdiparams（权重）、inference.json（结构）、inference.yml（元信息）。
+
+\subsection{系统启动}
+\begin{lstlisting}[language=bash, caption={一键启动及输出}]
+cd ~/ocrcplus && ./start.sh
+
+🚀 PaddleOCR API 启动: http://0.0.0.0:8899
+📄 API 文档: http://0.0.0.0:8899/docs
+✅ jtop 状态采集已启动
+🔥 GPU 预热中（首次推理，约 8s）...
+✅ GPU 预热完成！模型已加载
+INFO:     Uvicorn running on http://0.0.0.0:8899
+\end{lstlisting}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/05-main-page.png}
+\caption{系统主页面：Web 前端含拖拽上传区、硬件状态监控面板、API 信息条}
+\label{fig:main-page}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/06-api-docs.png}
+\caption{Swagger API 自动文档（/docs）：显示全部 5 个接口}
+\label{fig:api-docs}
+\end{figure}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{screenshots/07-ocr-result.png}
+\caption{OCR 识别结果：左侧文字列表（含置信度），右侧可视化标注图片}
+\label{fig:ocr-result}
+\end{figure}
+
+% ==================== 3. 总体设计 ====================
+\section{总体设计}
+
+\subsection{系统架构}
+系统采用\textbf{四层分层架构}设计：
+
+\begin{figure}[H]\centering
+\begin{tikzpicture}[
+  box/.style={draw,rectangle,minimum width=14cm,minimum height=1cm,align=center,fill=blue!8,font=\small},
+  arrow/.style={->,thick}]
+  \node[box] at (0,5)   {用户交互层（Browser）\quad HTML5 前端};
+  \node[box] at (0,3.33) {API 服务层（FastAPI :8899）\quad POST /ocr \quad GET /status};
+  \node[box] at (0,1.67) {C++ 推理引擎层（ppocr）\quad Paddle Inference GPU \quad OpenCV CUDA};
+  \node[box] at (0,0)    {硬件平台层（Jetson Orin Nano）\quad CUDA 12.6 \quad cuDNN 9.3};
+  \draw[arrow] (0,4.5) -- (0,3.83); \draw[arrow] (0,2.83) -- (0,2.17); \draw[arrow] (0,1.17) -- (0,0.5);
+\end{tikzpicture}
+\caption{系统四层架构图}
+\end{figure}
+
+\subsection{模块划分}
+\begin{longtable}{|p{3cm}|p{3.5cm}|p{6.5cm}|}\hline
+\textbf{模块} & \textbf{文件} & \textbf{功能} \\\hline
+Web 前端 & static/index.html & 上传/展示/硬件监控面板 \\\hline
+API 服务 & server.py & 路由/调度/生命周期 \\\hline
+GPU 预热 & server.py(lifespan) & 启动时预加载模型 \\\hline
+硬件监控 & server.py(\_jtop\_thread) & 1秒周期采集 Jetson 状态 \\\hline
+OCR 引擎 & build/ppocr & 文字检测+识别 GPU 推理 \\\hline
+压测工具 & stress\_test.py & 并发性能基准测试 \\\hline
+启动脚本 & start.sh & 一键启动 \\\hline
+\end{longtable}
+
+\subsection{目录结构}
+\begin{lstlisting}[caption={项目目录结构}]
+~/ocrcplus/
+├── server.py                   # FastAPI 主服务
+├── start.sh                    # 一键启动
+├── requirements.txt            # 依赖清单
+├── stress_test.py              # 压测脚本
+├── static/index.html           # Web 前端
+├── models/                     # OCR 推理模型
+├── PaddleOCR/deploy/cpp_infer/
+│   ├── build/ppocr             # C++ 引擎
+│   ├── build_trt/ppocr         # TRT 引擎
+│   └── src/                    # 引擎源码(含TRT修改)
+├── paddle_inference_install_dir/  # Paddle 推理库
+├── output/                     # 推理结果
+└── venv/                       # Python 虚拟环境
+\end{lstlisting}
+
+\subsection{数据流}
+用户图片 $\rightarrow$ FastAPI 接收 $\rightarrow$ 临时保存 $\rightarrow$ subprocess 调用 ppocr $\rightarrow$ CUDA GPU 推理（检测+识别）$\rightarrow$ JSON + PNG 输出 $\rightarrow$ 结果读取 $\rightarrow$ Base64 编码 $\rightarrow$ HTTP JSON 返回 $\rightarrow$ 前端渲染。
+
+% ==================== 4. 模块详细设计 ====================
+\section{模块详细设计}
+
+\subsection{API 服务模块（server.py）}
+
+\subsubsection{生命周期管理}
+\begin{enumerate}
+    \item \textbf{启动}：启动 jtop 线程 $\rightarrow$ 等待采集 $\rightarrow$ GPU 预热推理 $\rightarrow$ 开始接受请求
+    \item \textbf{运行}：POST /ocr / POST /ocr\_base64 / GET /status / GET / / GET /docs
+    \item \textbf{关闭}：清理临时资源
+\end{enumerate}
+
+\subsubsection{核心函数}
+\begin{longtable}{|p{3cm}|p{3cm}|p{3.5cm}|p{3.5cm}|}\hline
+\textbf{函数} & \textbf{类型} & \textbf{输入} & \textbf{输出} \\\hline
+run\_ocr(path,name) & 同步 & 图片路径 & OCR 结果 dict \\\hline
+\_jtop\_thread() & 后台线程 & 无 & 写入全局缓存 \\\hline
+ocr(file) & 异步 & UploadFile & JSONResponse \\\hline
+ocr\_base64(data) & 异步 & dict & JSONResponse \\\hline
+status() & 异步 & 无 & dict \\\hline
+\end{longtable}
+
+\subsection{C++ OCR 推理引擎（ppocr）}
+
+\subsubsection{源码结构}
+\begin{lstlisting}[caption={ppocr 源码结构}]
+ppocr
+├── cli.cc                       # 命令行入口
+├── src/base/
+│   ├── base_predictor.cc        # run_mode 映射
+│   └── base_pipeline.cc         # 流水线基类
+├── src/common/
+│   └── static_infer.cc          # Paddle Config 配置
+│       ├── Create()             # 创建 Predictor
+│       │   ├── GPU: EnableUseGpu()
+│       │   ├── TRT: EnableTensorRtEngine()  ← 项目中新增
+│       │   └── FP16: kHalf precision
+│       └── Apply()              # 执行推理
+├── src/modules/
+│   ├── text_detection/          # DB 文本检测
+│   └── text_recognition/        # CRNN 文本识别
+├── src/pipelines/ocr/           # 检测→识别 流水线
+└── src/utils/
+    ├── pp_option.h              # 运行模式定义(含新增TRT)
+    └── args.cc                  # 命令行参数
+\end{lstlisting}
+
+\subsubsection{支持的运行模式}
+\begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}\hline
+\textbf{模式} & \textbf{标识} & \textbf{说明} \\\hline
+Paddle 原生 FP32 & paddle & 原生 GPU 后端 FP32 \\\hline
+Paddle 原生 FP16 & paddle\_fp16 & 半精度推理 \\\hline
+\textbf{TensorRT FP32} & \textbf{paddle\_trt\_fp32} & \textbf{新增：TRT FP32} \\\hline
+\textbf{TensorRT FP16} & \textbf{paddle\_trt\_fp16} & \textbf{新增：TRT FP16} \\\hline
+MKL-DNN & mkldnn & Intel CPU加速(ARM不支持) \\\hline
+\end{longtable}
+
+\subsubsection{新增 TensorRT 支持的源码修改}
+
+\textbf{文件一：src/utils/pp\_option.h} — 扩展运行模式：
+\begin{lstlisting}[language=C++]
+// 修改前
+const std::vector<std::string> SUPPORT_RUN_MODE = {
+    "paddle", "paddle_fp16", "mkldnn", "mkldnn_bf16"
+};
+// 修改后（新增 2 个 TRT 模式）
+const std::vector<std::string> SUPPORT_RUN_MODE = {
+    "paddle", "paddle_fp16",
+    "paddle_trt_fp32", "paddle_trt_fp16",  // ← 新增
+    "mkldnn", "mkldnn_bf16"
+};
+\end{lstlisting}
+
+\textbf{文件二：src/base/base\_predictor.cc} — 映射 precision 参数：
+\begin{lstlisting}[language=C++]
+} else if (precision == "trt_fp16") {
+    auto status = pp_option_ptr_->SetRunMode("paddle_trt_fp16");
+} else if (precision == "trt_fp32") {
+    auto status = pp_option_ptr_->SetRunMode("paddle_trt_fp32");
+}
+\end{lstlisting}
+
+\textbf{文件三：src/common/static\_infer.cc} — TRT Engine 配置（核心修改）：
+\begin{lstlisting}[language=C++]
+if (option_.RunMode().find("paddle_trt") != std::string::npos) {
+    bool use_fp16 = (option_.RunMode() == "paddle_trt_fp16");
+    paddle_infer::PrecisionType trt_precision =
+        use_fp16 ? paddle_infer::PrecisionType::kHalf
+                 : paddle_infer::PrecisionType::kFloat32;
+    config.EnableTensorRtEngine(
+        1 << 30,       // 1GB workspace
+        -1,             // 动态 batch
+        2,              // min subgraph size
+        trt_precision,
+        true,           // 缓存序列化 engine
+        false);         // 非 INT8 校准
+    config.EnableTunedTensorRtDynamicShape();
+}
+\end{lstlisting}
+
+\textbf{TensorRT 参数设计说明}：
+\begin{longtable}{|p{3.5cm}|p{2cm}|p{7.5cm}|}\hline
+\textbf{参数} & \textbf{值} & \textbf{说明} \\\hline
+workspace\_size & 1GB & 最大工作空间，适配 8GB 共享内存 \\\hline
+max\_batch\_size & -1 & 动态 batch 模式 \\\hline
+min\_subgraph\_size & 2 & 最小子图大小，避免过小转换开销 \\\hline
+use\_static & true & 启用 engine 序列化缓存 \\\hline
+use\_calib\_mode & false & 非 INT8 精度无需校准 \\\hline
+\end{longtable}
+
+\subsection{Web 前端模块（index.html）}
+\begin{itemize}
+    \item 图片上传：点击/拖拽/Ctrl+V 粘贴三种方式
+    \item 预览：FileReader API Base64 缩略图
+    \item 结果展示：文字列表 + 置信度（绿$>$0.9/黄$>$0.7/红）
+    \item 可视化：Base64 标注图片渲染
+    \item 硬件监控：每 5 秒 GET /status 刷新
+    \item 状态栏布局：
+\end{itemize}
+\begin{lstlisting}[caption={前端状态栏}]
+┌────────┬────────┬───────────┬──────────┬───────┬──────────┐
+│  GPU   │  CPU   │   内存     │  温度     │ 功耗  │   磁盘    │
+│  0%    │ 6.7%   │ 4.4G/7.4G │ 46.1°C  │ 4.6W  │ 44/232G  │
+└────────┴────────┴───────────┴──────────┴───────┴──────────┘
+\end{lstlisting}
+
+% ==================== 5. 接口设计 ====================
+\section{接口设计}
+
+\subsection{规范}
+\begin{longtable}{|p{3cm}|p{10cm}|}\hline
+基础路径 & http://\{host\}:8899 \\\hline
+请求格式 & multipart/form-data / JSON \\\hline
+响应格式 & JSON \\\hline
+超时 & 60 秒 \\\hline
+\end{longtable}
+
+\subsection{接口列表}
+
+\subsubsection{POST /ocr — 图片文字识别}
+\begin{longtable}{|p{3cm}|p{10cm}|}\hline
+方法 & POST \\\hline
+Content-Type & multipart/form-data \\\hline
+参数 & file（图片文件） \\\hline
+响应 & \{"texts":[...],"scores":[...],"count":N,"vis\_base64":"..."\} \\\hline
+\end{longtable}
+
+\subsubsection{GET /status — 机器实时状态}
+返回 device（静态信息）、realtime（jtop 实时数据：GPU/CPU/温度/功耗/风扇/模式）、api（服务配置）。
+
+\subsubsection{其他接口}
+\begin{longtable}{|p{2.5cm}|p{4cm}|p{6.5cm}|}\hline
+POST & /ocr\_base64 & Base64 图片识别 \\\hline
+GET & /health & 健康检查 \\\hline
+GET & / & Web 前端页面 \\\hline
+GET & /docs & Swagger API 文档 \\\hline
+\end{longtable}
+
+% ==================== 6. 核心算法与流程 ====================
+\section{核心算法与流程}
+
+\subsection{OCR 推理流程}
+\begin{enumerate}
+    \item \textbf{图像预处理}（OpenCV）：解码 + 自适应缩放
+    \item \textbf{文本检测}（PP-OCRv5\_mobile\_det, DB 算法）：输出 N 个文本区域角点坐标
+    \item \textbf{文本识别}（PP-OCRv5\_mobile\_rec, CRNN 算法）：逐一识别 N 个区域，输出文字 + 置信度
+    \item \textbf{后处理}（OpenCV）：排序 + 绘图 + JSON 序列化
+\end{enumerate}
+
+\subsection{GPU 预热机制}
+服务启动时执行一次 OCR 推理 $\rightarrow$ 加载模型到 GPU 显存 $\rightarrow$ 初始化 CUDA 上下文 $\rightarrow$ 预热 cuDNN cache。冷启动 $\approx$8s $\rightarrow$ 预热后 $\approx$5.5s。
+
+\subsection{性能数据}
+\begin{longtable}{|p{6cm}|p{7cm}|}\hline
+\textbf{指标} & \textbf{值} \\\hline
+模型 & PP-OCRv5 Mobile（4.8MB+17MB） \\\hline
+冷启动耗时 & $\approx$8.1s \\\hline
+\textbf{热推理耗时} & \textbf{$\approx$5.55s/图} \\\hline
+GPU 使用率（推理时） & 85\%--95\% \\\hline
+显存占用 & $<$2GB \\\hline
+\end{longtable}
+
+% ==================== 7. 安全设计 ====================
+\section{安全设计}
+\begin{longtable}{|p{3cm}|p{10cm}|}\hline
+输入校验 & MIME 类型检查；UUID 临时文件名 \\\hline
+进程隔离 & OCR 通过 subprocess 独立进程执行 \\\hline
+资源清理 & finally 块确保临时文件删除 \\\hline
+超时保护 & 子进程 60s 超时 \\\hline
+异常处理 & try/except 全局捕获，返回结构化错误 JSON \\\hline
+\end{longtable}
+
+% ==================== 附录 ====================
+\appendix
+\section{完整技术栈清单}
+\begin{longtable}{|p{3cm}|p{5cm}|p{2.5cm}|p{2.5cm}|}\hline
+\textbf{类别} & \textbf{技术} & \textbf{版本} & \textbf{架构} \\\hline
+AI 推理引擎 & Paddle Inference & 3.0.0 & C++ \\\hline
+OCR 模型 & PP-OCRv5 Mobile & -- & -- \\\hline
+图像处理 & OpenCV & 4.10.0 & C++ CUDA \\\hline
+GPU 计算 & CUDA & 12.6 & -- \\\hline
+深度加速 & cuDNN & 9.3 & -- \\\hline
+推理优化 & TensorRT & 10.3 & -- \\\hline
+C++ 编译 & GCC & 11.4.0 & ARM aarch64 \\\hline
+构建 & CMake & 3.26.4 & -- \\\hline
+Web 框架 & FastAPI & 0.136 & Python 3.10 \\\hline
+ASGI & uvicorn & 0.48 & Python 3.10 \\\hline
+硬件监控 & jetson-stats & 4.3.2 & Python 3.10 \\\hline
+前端 & HTML5+CSS3 & -- & -- \\\hline
+硬件 & Jetson Orin Nano & Super & ARM aarch64 \\\hline
+OS & Ubuntu+L4T & 22.04/R36.5.0 & JetPack 6 \\\hline
+\end{longtable}
+
+\end{document}
