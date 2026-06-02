@@ -8,10 +8,11 @@ import json
 import os
 import re
 import subprocess
+import threading
 import time
 import uuid
+from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import Optional
 
 import psutil
 from fastapi import FastAPI, File, UploadFile
@@ -27,8 +28,24 @@ STATIC_DIR = BASE_DIR / "static"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
 
-app = FastAPI(title="PaddleOCR API", version="1.0.0", docs_url="/docs")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+# ---- jtop 全局实例 (后台持续采集) ----
+_jtop = None
+_jtop_stats_cache = {}
+_jtop_lock = threading.Lock()
+
+def _jtop_thread():
+    """后台线程持续从 jtop 读取 Jetson 状态"""
+    global _jtop, _jtop_stats_cache
+    try:
+        from jtop import jtop
+        with jtop() as jetson:
+            _jtop = jetson
+            while True:
+                time.sleep(1)
+                with _jtop_lock:
+                    _jtop_stats_cache = jetson.stats.copy() if jetson.stats else {}
+    except Exception as e:
+        print(f"⚠️ jtop 后台线程异常: {e}")
 
 # ---- 机器状态采集 ----
 DEVICE_INFO = {
@@ -50,72 +67,88 @@ def _read_l4t():
     try: return Path("/etc/nv_tegra_release").read_text().strip().split("\n")[0].replace("# ", "")
     except: return "N/A"
 
-def _get_tegrastats():
-    """获取 tegrastats 快照 (GPU/CPU 使用率、温度、功耗)"""
-    try:
-        out = subprocess.check_output(
-            ["tegrastats", "--interval", "100", "--count", "1"],
-            timeout=3, stderr=subprocess.DEVNULL
-        ).decode()
-        return out.strip().split("\n")[-1]
-    except: return ""
+# ---- FastAPI lifespan: 启动 jtop + 预热 ----
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 启动 jtop 后台线程
+    t = threading.Thread(target=_jtop_thread, daemon=True, name="jtop")
+    t.start()
+    time.sleep(2)  # 等 jtop 采集第一帧
+    print("✅ jtop 状态采集已启动")
 
-def _parse_tegrastats(raw: str) -> dict:
-    info = {}
-    # RAM
-    m = re.search(r'RAM\s+(\d+)/(\d+)MB', raw)
-    if m: info["ram_used_mb"], info["ram_total_mb"] = int(m.group(1)), int(m.group(2))
-    # SWAP
-    m = re.search(r'SWAP\s+(\d+)/(\d+)MB', raw)
-    if m: info["swap_used_mb"], info["swap_total_mb"] = int(m.group(1)), int(m.group(2))
-    # CPU usage
-    m = re.search(r'CPU\s+\[(.+?)\]', raw)
-    if m:
-        cores = [int(x.strip('%')) for x in m.group(1).split(',') if x.strip('%').isdigit()]
-        if cores: info["cpu_percent"] = round(sum(cores) / len(cores), 1)
-    # GPU usage
-    m = re.search(r'GR3D_FREQ\s+(\d+)%', raw)
-    if m: info["gpu_percent"] = int(m.group(1))
-    # Temperature
-    temps = {}
-    for t in re.findall(r'(\w+)@(\d+\.?\d*)C', raw):
-        temps[t[0]] = float(t[1])
-    info["temps"] = temps
-    # Power
-    m = re.search(r'VDD_IN\s+(\d+)/(\d+)', raw)
-    if m: info["power_cur_mw"], info["power_max_mw"] = int(m.group(1)), int(m.group(2))
-    return info
+    # 预热 GPU
+    warmup_img = BASE_DIR / "models" / "test.png"
+    if warmup_img.exists():
+        print("🔥 GPU 预热中（首次推理，约 8s）...")
+        try:
+            run_ocr(str(warmup_img), "warmup")
+            print("✅ GPU 预热完成！模型已加载，后续请求 ~5.5s/图")
+        except Exception as e:
+            print(f"⚠️ 预热失败: {e}")
+
+    yield  # 服务运行中
+    # shutdown 清理
+    print("🛑 服务关闭")
+
+app = FastAPI(title="PaddleOCR API", version="1.0.0", docs_url="/docs", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 @app.get("/status")
 async def status():
-    """机器状态 + API 信息"""
+    """机器状态 + API 信息（来自 jtop）"""
     DEVICE_INFO["l4t"] = _read_l4t()
-    ts_raw = _get_tegrastats()
-    ts = _parse_tegrastats(ts_raw) if ts_raw else {}
 
-    # psutil 补充
-    mem = psutil.virtual_memory()
-    swap = psutil.swap_memory()
+    with _jtop_lock:
+        s = _jtop_stats_cache.copy() if _jtop_stats_cache else {}
+
+    # 解析 jtop 数据
+    cpu_cores = []
+    for i in range(1, 7):
+        v = s.get(f"CPU{i}")
+        if v is not None:
+            cpu_cores.append(v)
+    cpu_percent = round(sum(cpu_cores) / len(cpu_cores), 1) if cpu_cores else 0
+    gpu_percent = round(s.get("GPU", 0), 1)
+    ram_frac = s.get("RAM", 0)
+    swap_frac = s.get("SWAP", 0)
+    ram_total_mb = 7607  # Orin Nano 8GB
+    ram_used_mb = round(ram_total_mb * ram_frac)
+    swap_total_mb = 11264  # 11GB
+    swap_used_mb = round(swap_total_mb * swap_frac)
+
+    temps = {}
+    for k, v in s.items():
+        if k.startswith("Temp "):
+            temps[k.replace("Temp ", "")] = round(v, 1)
+
+    power = {}
+    for k, v in s.items():
+        if k.startswith("Power "):
+            power[k.replace("Power ", "")] = round(v, 1)
+
     disk = psutil.disk_usage("/")
 
     return {
         "device": DEVICE_INFO,
         "realtime": {
-            "cpu_percent": psutil.cpu_percent(interval=0.1),
-            "cpu_percent_tegrastats": ts.get("cpu_percent", "N/A"),
-            "gpu_percent": ts.get("gpu_percent", "N/A"),
-            "ram_used_mb": ts.get("ram_used_mb", mem.used >> 20),
-            "ram_total_mb": ts.get("ram_total_mb", mem.total >> 20),
-            "ram_percent": round(mem.percent, 1),
-            "swap_used_mb": ts.get("swap_used_mb", swap.used >> 20),
-            "swap_total_mb": ts.get("swap_total_mb", swap.total >> 20),
-            "swap_percent": round(swap.percent, 1),
+            "cpu_percent": cpu_percent,
+            "cpu_cores": cpu_cores,
+            "gpu_percent": gpu_percent,
+            "ram_used_mb": ram_used_mb,
+            "ram_total_mb": ram_total_mb,
+            "ram_percent": round(ram_frac * 100, 1),
+            "swap_used_mb": swap_used_mb,
+            "swap_total_mb": swap_total_mb,
+            "swap_percent": round(swap_frac * 100, 1),
             "disk_used_gb": round(disk.used / (1024**3), 1),
             "disk_total_gb": round(disk.total / (1024**3), 1),
             "disk_percent": round(disk.percent, 1),
-            "temps_c": ts.get("temps", {}),
-            "power_cur_mw": ts.get("power_cur_mw", "N/A"),
-            "power_max_mw": ts.get("power_max_mw", "N/A"),
+            "temps_c": temps,
+            "power_mw": power,
+            "fan_pwm": s.get("Fan pwmfan0", "N/A"),
+            "jetson_clocks": s.get("jetson_clocks", "N/A"),
+            "nvp_model": s.get("nvp model", "N/A"),
+            "_source": "jtop",
         },
         "api": {
             "ppocr_bin": PPOCR_BIN,
@@ -251,22 +284,6 @@ async def ocr_base64(data: dict):
 @app.get("/health")
 async def health():
     return {"status": "ok", "ppocr_bin": PPOCR_BIN, "models": MODELS_DIR}
-
-
-# ---- 启动预热：保持 GPU 热状态 ----
-@app.on_event("startup")
-async def warmup():
-    """启动时运行一次 OCR 推理，加载模型并预热 GPU"""
-    warmup_img = BASE_DIR / "models" / "test.png"
-    if not warmup_img.exists():
-        print("⚠️ 预热图片不存在，跳过预热")
-        return
-    print("🔥 GPU 预热中（首次推理，约 8s）...")
-    try:
-        run_ocr(str(warmup_img), "warmup")
-        print("✅ GPU 预热完成！模型已加载，后续请求 ~5.5s/图")
-    except Exception as e:
-        print(f"⚠️ 预热失败: {e}")
 
 
 if __name__ == "__main__":
