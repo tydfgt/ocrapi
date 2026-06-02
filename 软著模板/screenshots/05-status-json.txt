@@ -1,0 +1,65 @@
+{
+    "device": {
+        "model": "NVIDIA Jetson Orin Nano Super",
+        "module": "P3767-0005",
+        "soc": "tegra234",
+        "cpu": "6\u00d7 ARM Cortex-A78AE",
+        "gpu": "Ampere GA10B | 1024 CUDA cores | SM 8.7",
+        "memory": "8GB LPDDR5 (CPU/GPU \u7edf\u4e00\u5185\u5b58)",
+        "l4t": "R36 (release), REVISION: 5.0, GCID: 43688277, BOARD: generic, EABI: aarch64, DATE: Fri Jan 16 03:50:45 UTC 2026",
+        "jetpack": "6.0",
+        "cuda": "12.6",
+        "cudnn": "9.3",
+        "tensorrt": "10.3",
+        "opencv": "4.10.0 (CUDA)"
+    },
+    "realtime": {
+        "cpu_percent": 15.3,
+        "cpu_cores": [
+            20,
+            21,
+            16,
+            12,
+            12,
+            11
+        ],
+        "gpu_percent": 0.0,
+        "ram_used_mb": 4874,
+        "ram_total_mb": 7607,
+        "ram_percent": 64.1,
+        "swap_used_mb": 1957,
+        "swap_total_mb": 11264,
+        "swap_percent": 17.4,
+        "disk_used_gb": 44.0,
+        "disk_total_gb": 232.2,
+        "disk_percent": 20.0,
+        "temps_c": {
+            "cpu": 44.2,
+            "cv0": -256,
+            "cv1": -256,
+            "cv2": -256,
+            "gpu": 46.0,
+            "soc0": 44.7,
+            "soc1": 45.3,
+            "soc2": 44.3,
+            "tj": 46.2
+        },
+        "power_mw": {
+            "VDD_CPU_GPU_CV": 716,
+            "VDD_SOC": 1515,
+            "TOT": 4864
+        },
+        "fan_pwm": 33.333333333333336,
+        "jetson_clocks": "OFF",
+        "nvp_model": "MAXN_SUPER",
+        "_source": "jtop"
+    },
+    "api": {
+        "ppocr_bin": "/home/ysdhanji/ocrcplus/PaddleOCR/deploy/cpp_infer/build/ppocr",
+        "det_model": "PP-OCRv5_mobile_det",
+        "rec_model": "PP-OCRv5_mobile_rec",
+        "device": "gpu",
+        "precision": "fp32",
+        "avg_time_s": 5.55
+    }
+}

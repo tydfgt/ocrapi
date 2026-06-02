@@ -1,0 +1,7 @@
+🚀 PaddleOCR API 启动: http://0.0.0.0:8899
+📄 API 文档: http://0.0.0.0:8899/docs
+✅ jtop 状态采集已启动
+🔥 GPU 预热中（首次推理，约 8s）...
+✅ GPU 预热完成！模型已加载，后续请求 ~5.5s/图
+INFO:     Started server process [165860]
+INFO:     Uvicorn running on http://0.0.0.0:8899

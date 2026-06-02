@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PaddleOCR - Jetson Orin Nano</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Segoe UI',monospace;background:#0b1120;color:#e2e8f0;min-height:100vh}
+.header{background:linear-gradient(135deg,#1e3a5f,#0b1120);padding:14px 24px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #1e293b;flex-wrap:wrap}
+.header h1{font-size:20px;color:#38bdf8}
+.badge{font-size:10px;padding:3px 10px;border-radius:10px;border:1px solid #334155;white-space:nowrap}
+.b1{color:#38bdf8;border-color:#38bdf840;background:#38bdf810}
+.b2{color:#4ade80;border-color:#4ade8040;background:#4ade8010}
+.b3{color:#facc15;border-color:#facc1540;background:#facc1510}
+
+.container{max-width:1200px;margin:0 auto;padding:16px}
+.status-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:16px}
+.sc{background:#111827;border:1px solid #1e293b;border-radius:10px;padding:10px 12px;text-align:center}
+.sc .v{font-size:22px;font-weight:700}.sc .l{font-size:10px;color:#64748b;margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.cg .v{color:#38bdf8}.cc .v{color:#4ade80}.cr .v{color:#facc15}.ct .v{color:#f87171}.cp .v{color:#c084fc}.cd .v{color:#fb923c}
+
+.upload-zone{border:2px dashed #1e293b;border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:.2s;background:#111827;margin-bottom:16px}
+.upload-zone:hover,.upload-zone.drag{border-color:#38bdf8;background:#1e293b20}
+.upload-zone p{color:#475569;font-size:14px}.upload-zone .icon{font-size:36px;margin-bottom:8px}
+#preview{display:none;max-width:100%;max-height:360px;margin:0 auto 16px;border-radius:8px;border:1px solid #1e293b}
+.loading{display:none;text-align:center;padding:20px}
+.spinner{width:32px;height:32px;border:3px solid #1e293b;border-top-color:#38bdf8;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.row{display:flex;gap:16px;flex-wrap:wrap}.col{flex:1;min-width:320px}
+.card{background:#111827;border:1px solid #1e293b;border-radius:12px;padding:16px;margin-bottom:16px}
+.card h3{font-size:14px;color:#38bdf8;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.result-item{display:flex;justify-content:space-between;padding:7px 10px;border-bottom:1px solid #1e293b;font-size:13px}
+.result-item:hover{background:#1e293b40}
+.result-item .text{color:#cbd5e1;flex:1;word-break:break-all}
+.result-item .score{font-size:11px;min-width:44px;text-align:right;font-family:monospace}
+.batch-stat{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.batch-stat span{background:#1e293b;border-radius:6px;padding:4px 10px;font-size:12px;color:#94a3b8}
+.batch-stat b{color:#38bdf8}
+#visImg{max-width:100%;border-radius:8px;display:none;border:1px solid #1e293b}
+.btn{background:#38bdf8;color:#0b1120;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+.btn.sm{padding:3px 10px;font-size:11px}.btn:hover{background:#7dd3fc}
+.footer{text-align:center;padding:12px;color:#334155;font-size:11px;border-top:1px solid #1e293b;margin-top:20px}
+input[type=file]{display:none}.refresh{font-size:10px;color:#64748b;cursor:pointer}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🔍 PaddleOCR</h1>
+  <span class="badge b1">Jetson Orin Nano Super</span>
+  <span class="badge b2">PP-OCRv5 Mobile</span>
+  <span style="flex:1"></span>
+  <span class="refresh" onclick="loadStatus()" title="刷新">🔄 刷新</span>
+</div>
+
+<div class="container">
+  <!-- 机器状态 -->
+  <div class="status-bar" id="statusBar">
+    <div class="sc cg"><div class="v" id="sGpu">--</div><div class="l">GPU</div></div>
+    <div class="sc cc"><div class="v" id="sCpu">--</div><div class="l">CPU</div></div>
+    <div class="sc cr"><div class="v" id="sRam">--</div><div class="l">内存</div></div>
+    <div class="sc ct"><div class="v" id="sTemp">--</div><div class="l">GPU 温度</div></div>
+    <div class="sc cp"><div class="v" id="sPwr">--</div><div class="l">功耗</div></div>
+    <div class="sc cd"><div class="v" id="sDisk">--</div><div class="l">磁盘</div></div>
+  </div>
+
+  <!-- 上传 -->
+  <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    <div class="icon">📤</div><p>点击 / 拖拽 / Ctrl+V 粘贴图片</p>
+  </div>
+  <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this.files[0])">
+  <img id="preview" alt="预览">
+
+  <div class="loading" id="loading"><div class="spinner"></div><p style="color:#475569">OCR 识别中...</p></div>
+
+  <div class="row">
+    <div class="col">
+      <div class="card">
+        <h3>📝 识别结果 <span class="batch-stat" id="batchStat" style="display:none"></span></h3>
+        <div id="results"><p style="color:#334155">等待上传图片...</p></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card">
+        <h3>🖼️ 可视化 <button class="btn sm" style="float:right" onclick="toggleVis()">切换</button></h3>
+        <img id="visImg" alt="可视化">
+      </div>
+    </div>
+  </div>
+
+  <!-- API 信息条 -->
+  <div class="card" style="font-size:12px;color:#64748b">
+    <strong style="color:#38bdf8">API:</strong> POST /ocr | POST /ocr_base64 | GET /status | <a href="/docs" style="color:#38bdf8">/docs</a>
+    &nbsp;|&nbsp; <span id="apiInfo">加载中...</span>
+  </div>
+</div>
+
+<div class="footer">PaddleOCR C++ ✦ Jetson Orin Nano ✦ PP-OCRv5 Mobile</div>
+
+<script>
+let visOn = true;
+
+async function loadStatus() {
+  try {
+    const r = await fetch('/status'), d = await r.json(), rt = d.realtime || {};
+    document.getElementById('sGpu').textContent = (rt.gpu_percent || '--') + '%';
+    document.getElementById('sCpu').textContent = (rt.cpu_percent || '--') + '%';
+    document.getElementById('sRam').textContent = fmtMB(rt.ram_used_mb) + ' / ' + fmtMB(rt.ram_total_mb);
+    const t = rt.temps_c || {};
+    document.getElementById('sTemp').textContent = t.GPU ? t.GPU + '°C' : (t.thermal ? t.thermal + '°C' : '--');
+    document.getElementById('sPwr').textContent = rt.power_cur_mw ? (rt.power_cur_mw/1000).toFixed(1) + 'W' : '--';
+    document.getElementById('sDisk').textContent = (rt.disk_used_gb||'--') + ' / ' + (rt.disk_total_gb||'--') + 'G';
+    const dev = d.device || {};
+    document.getElementById('apiInfo').textContent =
+      `L4T ${dev.l4t||'?'} | CUDA ${dev.cuda||'?'} | cuDNN ${dev.cudnn||'?'} | TRT ${dev.tensorrt||'?'} | OpenCV ${dev.opencv||'?'}`;
+  } catch(e) { console.error(e); }
+}
+function fmtMB(mb) { return mb >= 1024 ? (mb/1024).toFixed(1)+'G' : mb+'M'; }
+loadStatus(); setInterval(loadStatus, 5000);
+
+const dz = document.getElementById('dropZone');
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag');
+  const f = e.dataTransfer.files[0]; if (f) handleFile(f);
+});
+document.addEventListener('paste', e => {
+  const item = e.clipboardData?.items?.[0];
+  if (item?.type.startsWith('image/')) handleFile(item.getAsFile());
+});
+
+function handleFile(file) {
+  if (!file) return;
+  const r = new FileReader();
+  r.onload = e => { document.getElementById('preview').src = e.target.result; document.getElementById('preview').style.display = 'block'; };
+  r.readAsDataURL(file);
+  upload(file);
+}
+
+async function upload(file) {
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('visImg').style.display = 'none';
+  document.getElementById('batchStat').style.display = 'none';
+  const fd = new FormData(); fd.append('file', file);
+  try {
+    const r = await fetch('/ocr', { method: 'POST', body: fd }), d = await r.json();
+    if (d.error) { document.getElementById('results').innerHTML = `<p style="color:#f87171">❌ ${d.error}</p>`; return; }
+    document.getElementById('batchStat').style.display = 'flex';
+    document.getElementById('batchStat').innerHTML =
+      `<span>检测 <b>${d.count}</b> 个文本区域</span>`;
+    let h = '';
+    (d.texts || []).forEach((t, i) => {
+      const s = (d.scores || [])[i] ?? 0;
+      const c = s > 0.9 ? '#4ade80' : s > 0.7 ? '#facc15' : '#f87171';
+      h += `<div class="result-item"><span class="text">${esc(t)}</span><span class="score" style="color:${c}">${s.toFixed(2)}</span></div>`;
+    });
+    document.getElementById('results').innerHTML = h || '<p style="color:#334155">未检测到文本</p>';
+    if (d.vis_base64) {
+      document.getElementById('visImg').src = 'data:image/png;base64,' + d.vis_base64;
+      if (visOn) document.getElementById('visImg').style.display = 'block';
+    }
+    loadStatus();
+  } catch(e) {
+    document.getElementById('results').innerHTML = `<p style="color:#f87171">❌ ${e.message}</p>`;
+  } finally { document.getElementById('loading').style.display = 'none'; }
+}
+
+function toggleVis() { visOn = !visOn; document.getElementById('visImg').style.display = visOn ? 'block' : 'none'; }
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+</script>
+</body>
+</html>
