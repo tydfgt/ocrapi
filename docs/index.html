@@ -445,24 +445,24 @@
     <h2>研发历程</h2>
     <div class="timeline">
       <div class="timeline-item">
-        <div class="tdate">Phase 1 · 2026.05</div>
+        <div class="tdate">Phase 1 · 2025.10 – 2025.12</div>
+        <div class="ttitle">选题调研与技术预研</div>
+        <div class="tdesc">确定焊机参数 OCR 识别方向，调研 PaddleOCR / Tesseract / EasyOCR 方案，完成 Jetson Orin Nano 硬件选型与 Paddle Inference 可行性验证。</div>
+      </div>
+      <div class="timeline-item">
+        <div class="tdate">Phase 2 · 2026.01 – 2026.03</div>
         <div class="ttitle">环境搭建与 C++ 编译</div>
         <div class="tdesc">Jetson 系统配置、OpenCV CUDA 自编译、Paddle Inference 库适配、解决 ARM 架构下 MKL 不可用导致的 CPU 模式崩溃问题。</div>
       </div>
       <div class="timeline-item">
-        <div class="tdate">Phase 2 · 2026.05</div>
-        <div class="ttitle">TensorRT 集成与性能基准</div>
-        <div class="tdesc">修改 PaddleOCR C++ 源码支持 TRT 推理，完成 4 模式基准测试。发现预编译 Paddle TRT 8.5 与系统 TRT 10.3 版本不匹配导致无加速效果，已记录技术分析。</div>
+        <div class="tdate">Phase 3 · 2026.04 – 2026.05</div>
+        <div class="ttitle">TensorRT 集成与 API 服务化</div>
+        <div class="tdesc">修改 PaddleOCR C++ 源码支持 TRT 推理，完成 4 模式基准测试。构建 FastAPI 服务、Web 管理面板、硬件监控集成、并发压测工具，完成端到端系统联调。</div>
       </div>
       <div class="timeline-item">
-        <div class="tdate">Phase 3 · 2026.06</div>
-        <div class="ttitle">API 服务化与前端开发</div>
-        <div class="tdesc">构建 FastAPI 服务、Web 管理面板、硬件监控集成、并发压测工具，完成端到端系统联调。</div>
-      </div>
-      <div class="timeline-item">
-        <div class="tdate">Phase 4 · 2026.06</div>
+        <div class="tdate">Phase 4 · 2026.05 – 2026.06</div>
         <div class="ttitle">文档撰写与知识产权准备</div>
-        <div class="tdesc">撰写全套软著申请材料（MD + LaTeX）、部署教程、项目 README，构建 GitHub Pages 主页，提交源代码至 GitHub 公开仓库。</div>
+        <div class="tdesc">撰写全套软著申请材料（MD + LaTeX）、部署教程、项目 README，构建 GitHub Pages 主页，提交源代码至 GitHub 公开仓库，完成项目交付。</div>
       </div>
     </div>
   </section>
