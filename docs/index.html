@@ -62,6 +62,16 @@
   }
   .header .meta-row div { display: flex; align-items: center; gap: 0.35rem; }
   .header .meta-row .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .header .org-line {
+    display: flex;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.2rem;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .header .org-line span { color: var(--muted); font-weight: 400; }
 
   .stats-row {
     display: grid;
@@ -288,10 +298,13 @@
     <p class="tagline">
       面向工业焊接场景的边缘智能 OCR 系统 — 基于 NVIDIA Jetson Orin Nano 与 PaddleOCR C++ 推理引擎，实现焊机表头参数的实时采集、识别与结构化输出。
     </p>
+    <div class="org-line">
+      <div>单位 <span>智能制造研究院</span></div>
+      <div>项目名称 <span>焊机识别项目</span></div>
+    </div>
     <div class="meta-row">
-      <div><span class="dot"></span> 单位：智能制造研究院</div>
-      <div><span class="dot"></span> 项目名称：焊机识别项目</div>
       <div><span class="dot"></span> 研发人员：屈雪松</div>
+      <div><span class="dot"></span> NVIDIA Jetson Orin Nano Super</div>
       <div><span class="dot"></span> JetPack 6.0 · CUDA 12.6</div>
     </div>
   </div>
