@@ -1,135 +1,72 @@
 % ============================================================
-%  软著申请材料清单 — LaTeX 模板
-%  编译方式：xelatex 05-材料清单.tex
+%  软著申请材料清单
+%  编译: xelatex 05-材料清单.tex
 % ============================================================
-
 \documentclass[12pt,a4paper]{ctexart}
-
-% ---------- 页面设置 ----------
-\usepackage[top=2.54cm, bottom=2.54cm, left=3.18cm, right=3.18cm]{geometry}
-\usepackage{longtable, booktabs, array}
-\usepackage{enumitem}
-\usepackage[colorlinks=true, linkcolor=black, urlcolor=blue]{hyperref}
-\usepackage{xcolor}
-\usepackage{amssymb}  % for \checkmark
-
-% 自定义 checkbox
-\newcommand{\unchecked}{$\square$}
-\newcommand{\checked}{$\square$\hspace{-0.55em}\raisebox{0.15em}{\textcolor{green!60!black}{\checkmark}}}
-
-\title{\heiti\zihao{2} 软件著作权申请材料清单}
-\author{}
-\date{}
+\usepackage[top=2.54cm,bottom=2.54cm,left=3.18cm,right=3.18cm]{geometry}
+\usepackage{longtable,booktabs,array,enumitem,hyperref}
+\hypersetup{colorlinks=true,linkcolor=black}
 
 \begin{document}
-\maketitle
-\thispagestyle{empty}
 
-% ============================================================
-\section{必需材料}
+\begin{center}
+{\heiti\zihao{2} 软著申请材料清单}\\[0.5cm]
+{\zihao{5} 软件名称：PaddleOCR 智能文字识别系统 V1.0}\\
+{\zihao{5} 申请人：屈雪松 \quad 申请日期：2026年6月2日}\\[1cm]
+\end{center}
 
-\begin{longtable}{|c|p{4.5cm}|p{6.5cm}|c|}
+\section*{材料清单}
+
+\begin{longtable}{|p{1cm}|p{6cm}|p{6cm}|}
 \hline
-\textbf{序号} & \textbf{材料名称} & \textbf{要求} & \textbf{状态} \\
-\hline
-1 & 软件著作权登记申请表 & 在线填写并打印，加盖公章（企业）或签字（个人） & \unchecked \\
-\hline
-2 & 软件说明书（用户手册）   & 图文并茂，包含软件界面截图，PDF 格式 & \unchecked \\
-\hline
-3 & 源代码文档              & 前后各 30 页，每页 $\ge$ 50 行，PDF 格式 & \unchecked \\
-\hline
-4 & 营业执照副本（企业）/ 身份证复印件（个人） & 加盖公章（企业）/ 签字（个人） & \unchecked \\
-\hline
+\textbf{序号} & \textbf{材料名称} & \textbf{文件} \\\hline
+1 & 软件著作权登记申请表 & 01-软件著作权登记申请表.md / .tex \\\hline
+2 & 软件说明书（用户手册） & 02-软件说明书（用户手册）.md / .tex \\\hline
+3 & 源代码文档（60页） & 03-源代码文档说明.md / 源代码文档.txt \\\hline
+4 & 软件设计说明书 & 04-软件设计说明书.md / .tex \\\hline
+5 & 身份证明文件 & 身份证正反面复印件 \\\hline
+6 & 源代码提取脚本 & extract\_sources.py \\\hline
 \end{longtable}
 
-% ============================================================
-\section{辅助材料（可选）}
-
-\begin{longtable}{|c|p{4.5cm}|p{6.5cm}|c|}
-\hline
-\textbf{序号} & \textbf{材料名称} & \textbf{说明} & \textbf{状态} \\
-\hline
-5 & 软件设计说明书  & 技术文档，有助于审查人员理解软件 & \unchecked \\
-\hline
-6 & 合作开发协议    & 合作开发时需提供 & \unchecked \\
-\hline
-7 & 委托开发合同    & 委托开发时需提供 & \unchecked \\
-\hline
-8 & 权利转让协议    & 继受取得时需提供 & \unchecked \\
-\hline
-\end{longtable}
-
-% ============================================================
-\section{审核要点自查}
-
-\subsection{一致性检查}
-\begin{itemize}
-    \item[\unchecked] 所有材料中\textbf{软件名称}完全一致（含大小写、标点、版本号）
-    \item[\unchecked] 所有材料中\textbf{著作权人名称}一致
-    \item[\unchecked] 开发完成日期在各文档中一致
-    \item[\unchecked] 版本号格式统一（如 V1.0、V1.0.0）
-\end{itemize}
-
-\subsection{源代码检查}
-\begin{itemize}
-    \item[\unchecked] 源代码共 60 页
-    \item[\unchecked] 前 30 页包含程序核心逻辑代码
-    \item[\unchecked] 后 30 页为程序末尾代码
-    \item[\unchecked] 每页不少于 50 行有效代码
-    \item[\unchecked] 无第三方库、自动生成代码
-    \item[\unchecked] 页眉标注软件名称 + 版本号
-    \item[\unchecked] 页脚标注页码
-\end{itemize}
-
-\subsection{说明书检查}
-\begin{itemize}
-    \item[\unchecked] 包含软件运行截图（建议 8--10 张以上）
-    \item[\unchecked] 每个核心功能均有操作说明
-    \item[\unchecked] 包含运行环境说明
-    \item[\unchecked] 包含安装/部署步骤
-    \item[\unchecked] 总页数建议 15--30 页
-\end{itemize}
-
-\subsection{申请表检查}
-\begin{itemize}
-    \item[\unchecked] 所有必填项已填写完整
-    \item[\unchecked] 软件分类号正确
-    \item[\unchecked] 权利范围已勾选
-    \item[\unchecked] 软件功能简述完整清晰（200--500 字）
-\end{itemize}
-
-% ============================================================
-\section{提交流程}
+\section*{提交步骤}
 
 \begin{enumerate}
-    \item 登录中国版权保护中心官网 \url{http://www.ccopyright.com.cn}
-    \item 在线填写软件著作权登记申请表
-    \item 打印申请表并签字/盖章
-    \item 将所有纸质材料邮寄至版权保护中心
-    \item 等待受理通知（约 1--2 周）
-    \item 等待审查结果（约 2--4 个月）
-    \item 领取著作权登记证书
+    \item 在线提交：中国版权保护中心 https://www.ccopyright.com.cn/
+    \item 注册账号 $\rightarrow$ 填写申请表 $\rightarrow$ 上传材料
+    \item 如需纸质邮寄：打印所有材料，签字盖章，邮寄至版权中心
 \end{enumerate}
 
-% ============================================================
-\section{费用参考}
+\section*{核对清单}
 
-\begin{longtable}{|p{5cm}|p{5cm}|}
+\begin{enumerate}
+    \item[\checkedbox] 申请表信息完整、准确
+    \item[\checkedbox] 软件名称、版本号在所有材料中一致
+    \item[\checkedbox] 用户手册图文并茂，含界面截图和操作步骤
+    \item[\checkedbox] 源代码 60 页，前 30 页 + 后 30 页，每页 50+ 行
+    \item[\checkedbox] 页眉标注软件全称 + 版本号，页脚标注页码
+    \item[\checkedbox] 设计说明书含架构图、模块划分、接口设计
+    \item[\checkedbox] 身份证明文件清晰可辨
+\end{enumerate}
+
+\section*{软件信息速查}
+
+\begin{longtable}{|p{4cm}|p{9cm}|}
 \hline
-\textbf{项目} & \textbf{费用} \\
-\hline
-官方登记费    & 以官网最新公示为准 \\
-\hline
-加急办理（可选） & 另计 \\
-\hline
+软件全称 & PaddleOCR 智能文字识别系统 \\\hline
+版本号 & V1.0 \\\hline
+分类号 & 30219-0000 \\\hline
+开发完成日期 & 2026年5月28日 \\\hline
+首次发表日期 & 2026年6月2日 \\\hline
+著作权人 & 屈雪松 \\\hline
+编程语言 & C++, Python, HTML5 \\\hline
+代码行数 & 约 4,000 行（不含第三方库） \\\hline
+运行平台 & NVIDIA Jetson Orin Nano (ARM) \\\hline
+GitHub & https://github.com/tydfgt/ocrapi \\\hline
 \end{longtable}
 
-% ============================================================
-\section*{咨询方式}
-
-\begin{itemize}
-    \item 中国版权保护中心官网：\url{http://www.ccopyright.com.cn}
-    \item 咨询电话：以官网公示为准
-\end{itemize}
+\begin{center}
+\vspace{1cm}
+编制日期：2026年6月2日 \quad 编制人：屈雪松
+\end{center}
 
 \end{document}

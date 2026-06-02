@@ -1,349 +1,195 @@
 % ============================================================
-%  软件说明书（用户手册）— LaTeX 模板
-%  编译方式：xelatex 02-用户手册.tex
-%  提示：请插入实际软件界面截图（使用 \includegraphics）
+%  PaddleOCR 智能文字识别系统 V1.0 — 软件说明书（用户手册）
+%  编译: xelatex 02-用户手册.tex
+%  截图放入 ../screenshots/
 % ============================================================
 
 \documentclass[12pt,a4paper]{ctexart}
-
-% ---------- 页面设置 ----------
 \usepackage[top=2.54cm, bottom=2.54cm, left=3.18cm, right=3.18cm]{geometry}
-\usepackage{graphicx}
-\usepackage{longtable, booktabs, array}
-\usepackage{enumitem}
-\usepackage{hyperref}
-\usepackage{xcolor}
-\usepackage{fancyhdr}
-\usepackage{caption}
-
-\hypersetup{
-  colorlinks=true,
-  linkcolor=black,
-  urlcolor=blue
-}
-
-% ---------- 页眉页脚 ----------
-\pagestyle{fancy}
-\fancyhf{}
-\fancyhead[C]{【软件全称 V1.0】用户手册}
-\fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+\usepackage{graphicx, longtable, booktabs, array, enumitem, hyperref, xcolor, fancyhdr, caption, float, listings}
+\hypersetup{colorlinks=true,linkcolor=black,urlcolor=blue}
+\lstset{basicstyle=\ttfamily\zihao{-5},numbers=left,numberstyle=\tiny\color{gray},frame=single,breaklines=true}
+\pagestyle{fancy}\fancyhf{}\fancyhead[C]{PaddleOCR 智能文字识别系统 V1.0 用户手册}\fancyfoot[C]{\thepage}\renewcommand{\headrulewidth}{0.4pt}
 
 \begin{document}
 
-% ============================================================
-%  封面
-% ============================================================
-\begin{titlepage}
-\centering
-\vspace*{4cm}
-
-{\heiti\zihao{1} 【软件全称】}
-
-\vspace{1cm}
-{\zihao{2} 用户手册}
-
-\vspace{2cm}
-
+\begin{titlepage}\centering\vspace*{3cm}
+{\heiti\zihao{1} PaddleOCR 智能文字识别系统}\\[1cm]
+{\zihao{2} 软件说明书（用户手册）}\\[2.5cm]
 \begin{tabular}{rl}
-\textbf{版本号：}   & V1.0 \\
-\textbf{著作权人：} & 【公司名称 / 个人姓名】 \\
-\textbf{编制日期：} & 【YYYY年MM月DD日】 \\
+\textbf{版本号：} & V1.0 \\ \textbf{著作权人：} & 屈雪松 \\
+\textbf{编制日期：} & 2026年6月2日 \\ \textbf{运行平台：} & NVIDIA Jetson Orin Nano Super
 \end{tabular}
-
-\vfill
+\vfill\noindent\rule{\textwidth}{0.4pt}
+{\zihao{5} 本文档为 PaddleOCR 智能文字识别系统的用户手册，详细描述软件的安装部署、功能使用和故障排除方法。}
 \end{titlepage}
 
-% ============================================================
-%  目录
-% ============================================================
-\tableofcontents
-\newpage
+\tableofcontents\newpage
 
-% ============================================================
-\section{引言}
-
-\subsection{编写目的}
-本说明书旨在为【软件名称】的用户提供安装、操作及维护指南，帮助用户快速掌握软件的使用方法。
-
-\subsection{适用范围}
-本手册适用于【软件名称 V1.0】的所有终端用户。
-
-\subsection{术语说明}
-\begin{longtable}{|p{3cm}|p{10cm}|}
-\hline
-\textbf{术语} & \textbf{说明} \\
-\hline
-【术语1】 & 【解释】 \\
-\hline
-【术语2】 & 【解释】 \\
-\hline
-\end{longtable}
-
-% ============================================================
 \section{软件概述}
+\subsection{功能介绍}
+PaddleOCR 智能文字识别系统是一套运行于 NVIDIA Jetson Orin Nano 边缘计算平台上的实时 OCR 服务软件，利用深度学习技术对上传图片进行文字检测与识别。
 
-\subsection{软件简介}
-【软件名称】是一款【简要描述软件性质，如：基于Web的XX管理系统】，主要用于【核心用途】。软件采用【技术架构】设计，具有【核心特点】等特点。
+\textbf{核心功能}：图片文字识别、Web 可视化前端、RESTful API 服务、Base64 图片识别、硬件实时监控、GPU 预热加速。
 
-\subsection{主要功能}
-\begin{enumerate}[label=\textbf{功能\arabic*：}]
-    \item \textbf{【功能模块一】}：【功能描述】
-    \item \textbf{【功能模块二】}：【功能描述】
-    \item \textbf{【功能模块三】}：【功能描述】
-    \item \textbf{【功能模块四】}：【功能描述】
-    \item \textbf{【功能模块五】}：【功能描述】
-\end{enumerate}
+\subsection{技术特点}
+\begin{longtable}{|p{4cm}|p{10cm}|}\hline
+边缘推理 & 全部计算在 Jetson 本地完成 \\\hline
+GPU 加速 & CUDA 12.6 + cuDNN 9.3 并行计算 \\\hline
+低延迟 & 预热后约 5.5 秒/图 \\\hline
+轻量级 & PP-OCRv5 Mobile 模型（4.8MB+17MB） \\\hline
+跨平台 API & 标准 RESTful 接口 \\\hline
+\end{longtable}
 
-\subsection{软件特点}
-\begin{itemize}
-    \item 【特点1：如界面简洁、操作便捷】
-    \item 【特点2：如支持多用户协作】
-    \item 【特点3：如数据安全保障】
-    \item 【特点4：如可扩展性强】
-\end{itemize}
-
-% ============================================================
 \section{运行环境}
-
 \subsection{硬件要求}
-\begin{longtable}{|p{2.5cm}|p{5cm}|p{5cm}|}
-\hline
-\textbf{配置项} & \textbf{最低配置} & \textbf{推荐配置} \\
-\hline
-CPU    & 【如：Intel i3】       & 【如：Intel i5 及以上】 \\
-\hline
-内存   & 【如：4GB】            & 【如：8GB 及以上】 \\
-\hline
-硬盘   & 【如：10GB 可用空间】  & 【如：50GB 可用空间】 \\
-\hline
-显示器 & 【如：1366×768】       & 【如：1920×1080】 \\
-\hline
+\begin{longtable}{|p{4cm}|p{4cm}|p{5cm}|}\hline
+\textbf{项目} & \textbf{最低配置} & \textbf{本系统配置} \\\hline
+平台 & Jetson Orin Nano & Jetson Orin Nano Super \\\hline
+内存 & 8GB & 8GB LPDDR5 \\\hline
+存储 & 16GB 可用 & 238GB NVMe SSD \\\hline
+GPU & CUDA 支持 & Ampere GA10B (1024 cores) \\\hline
 \end{longtable}
 
-\subsection{软件环境}
-\begin{longtable}{|p{3cm}|p{10cm}|}
-\hline
-\textbf{项目} & \textbf{要求} \\
-\hline
-操作系统   & 【如：Windows 10 及以上 / Linux / macOS】 \\
-\hline
-浏览器    & 【如：Chrome 90+ / Edge 90+ / Firefox 88+】 \\
-\hline
-数据库    & 【如：MySQL 8.0+】 \\
-\hline
-其他依赖  & 【如：JDK 17 / Node.js 18+】 \\
-\hline
+\subsection{软件依赖}
+\begin{longtable}{|p{4cm}|p{3cm}|p{6cm}|}\hline
+\textbf{组件} & \textbf{版本} & \textbf{说明} \\\hline
+JetPack / L4T & 6.0 / R36.5.0 & Jetson 系统平台 \\\hline
+CUDA & 12.6 & GPU 并行计算 \\\hline
+cuDNN & 9.3 & 深度神经网络加速 \\\hline
+OpenCV & 4.10.0 & 图像处理（自编译 CUDA 版） \\\hline
+Python & 3.10 & API 服务 \\\hline
+GCC & 11.4 & C++ 编译器 \\\hline
 \end{longtable}
 
-% ============================================================
-\section{安装与卸载}
+\subsection{环境检查}
+\begin{lstlisting}[language=bash]
+cat /etc/nv_tegra_release   # L4T 版本
+nvcc --version              # CUDA
+dpkg -l | grep cudnn        # cuDNN
+python3 -c "import cv2; print(cv2.__version__)"  # OpenCV
+free -h                     # 内存
+\end{lstlisting}
 
-\subsection{软件安装}
+\section{安装与部署}
 
-\subsubsection{部署步骤（Web端）}
-\begin{enumerate}
-    \item 确保服务器满足运行环境要求
-    \item 安装所需依赖环境（如 JDK、数据库等）
-    \item 将程序包解压至目标目录
-    \item 配置数据库连接信息（修改 \texttt{application.yml} 配置文件）
-    \item 执行数据库初始化脚本
-    \item 启动服务：\texttt{java -jar xxx.jar}
-    \item 访问地址：\texttt{http://localhost:8080}
-\end{enumerate}
+\subsection{获取源代码}
+\begin{lstlisting}[language=bash]
+mkdir -p ~/ocrcplus && cd ~/ocrcplus
+git clone --depth=1 https://gitee.com/paddlepaddle/PaddleOCR.git
+\end{lstlisting}
 
-\subsubsection{安装步骤（客户端）}
-\begin{enumerate}
-    \item 双击安装包 \texttt{Setup.exe}
-    \item 阅读并同意许可协议
-    \item 选择安装目录
-    \item 点击“安装”按钮
-    \item 等待安装完成，点击“完成”
-\end{enumerate}
+\subsection{下载 Paddle Inference 推理库}
+\begin{lstlisting}[language=bash]
+cd ~/ocrcplus
+wget "https://paddle-inference-lib.bj.bcebos.com/3.0.0/cxx_c/Jetson/jetpack5.1.2_gcc9.4/orin/paddle_inference_install_dir.tgz"
+tar xzf paddle_inference_install_dir.tgz
+\end{lstlisting}
 
-\subsection{软件卸载}
-\begin{enumerate}
-    \item 打开“控制面板” → “程序和功能”
-    \item 找到【软件名称】
-    \item 右键选择“卸载”，按提示完成卸载
-\end{enumerate}
+\subsection{编译 C++ OCR 引擎}
+\begin{lstlisting}[language=bash]
+cd ~/ocrcplus/PaddleOCR/deploy/cpp_infer && mkdir build && cd build
+cmake .. -DPADDLE_LIB=~/ocrcplus/paddle_inference_install_dir \
+  -DOPENCV_DIR=/usr/local -DCUDA_LIB=/usr/local/cuda-12.6/lib64 \
+  -DCUDNN_LIB=/usr/lib/aarch64-linux-gnu -DWITH_MKL=OFF -DWITH_GPU=ON
+make -j2
+\end{lstlisting}
 
-% ============================================================
-\section{功能操作说明}
+\subsection{安装 Python 依赖}
+\begin{lstlisting}[language=bash]
+cd ~/ocrcplus && python3 -m venv venv && source venv/bin/activate
+pip install fastapi uvicorn python-multipart Pillow psutil jetson-stats aiofiles aiohttp
+\end{lstlisting}
 
-% 重要提示框
-\fcolorbox{red}{red!5}{%
-\begin{minipage}{0.95\textwidth}
-\centering\large
-⚠ \textbf{重要提示}：以下每个功能模块建议配上软件界面截图。\\[2pt]
-截图令文档图文并茂，更有利于通过审查。
-\end{minipage}%
-}
-\vspace{1em}
+\subsection{下载 OCR 模型}
+\begin{lstlisting}[language=bash]
+mkdir -p ~/ocrcplus/models && cd ~/ocrcplus/models
+wget "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_infer.tar"
+wget "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_rec_infer.tar"
+tar xf PP-OCRv5_mobile_det_infer.tar && tar xf PP-OCRv5_mobile_rec_infer.tar
+\end{lstlisting}
 
-% ----- 5.1 登录 -----
-\subsection{登录/注册}
+\subsection{启动服务}
+\begin{lstlisting}[language=bash]
+cd ~/ocrcplus && ./start.sh
+# 输出: 🚀 PaddleOCR API 启动: http://0.0.0.0:8899
+#       ✅ GPU 预热完成！后续请求 ~5.5s/图
+\end{lstlisting}
 
-% 示例截图占位
-\begin{figure}[htbp]
-\centering
-\fbox{%
-\begin{minipage}{0.7\textwidth}
-\centering
-\vspace{3cm}
-【请插入登录界面截图】\\[3cm]
-\end{minipage}%
-}
-\caption{登录界面}
-\label{fig:login}
-\end{figure}
+\begin{figure}[H]\centering\includegraphics[width=\textwidth]{../screenshots/04-startup-log.png}
+\caption{系统启动日志}\end{figure}
 
-\begin{enumerate}
-    \item 打开软件，进入登录页面
-    \item 输入用户名和密码
-    \item 点击“登录”按钮进入系统主界面
-    \item 首次使用请点击“注册”链接完成账号注册
-\end{enumerate}
+\section{Web 前端使用指南}
 
-% ----- 5.2 主界面 -----
-\subsection{主界面概览}
+\subsection{访问前端}
+浏览器访问 \texttt{http://\{设备IP\}:8899}。
 
-\begin{figure}[htbp]
-\centering
-\fbox{%
-\begin{minipage}{0.7\textwidth}
-\centering
-\vspace{3cm}
-【请插入主界面截图】\\[3cm]
-\end{minipage}%
-}
-\caption{主界面概览}
-\label{fig:main}
-\end{figure}
-
-主界面包含以下区域：
-\begin{itemize}
-    \item \textbf{导航栏}：位于页面左侧/顶部，提供各功能模块入口
-    \item \textbf{工作区}：页面中央区域，展示主要内容
-    \item \textbf{状态栏}：显示当前用户信息及系统状态
-\end{itemize}
-
-% ----- 5.3 功能模块一 -----
-\subsection{【功能模块一】}
-
-\begin{figure}[htbp]
-\centering
-\fbox{%
-\begin{minipage}{0.7\textwidth}
-\centering
-\vspace{3cm}
-【请插入功能界面截图一】\\[3cm]
-\end{minipage}%
-}
-\caption{【功能模块一】界面}
-\label{fig:func1}
-\end{figure}
-
-\textbf{功能说明}：【描述该功能的作用】
-
-\textbf{操作步骤}：
-\begin{enumerate}
-    \item 点击导航栏“【模块名称】”进入
-    \item 【具体操作步骤1】
-    \item 【具体操作步骤2】
-    \item 点击“保存/提交”完成操作
-\end{enumerate}
-
-% ----- 5.4 功能模块二 -----
-\subsection{【功能模块二】}
-
-\begin{figure}[htbp]
-\centering
-\fbox{%
-\begin{minipage}{0.7\textwidth}
-\centering
-\vspace{3cm}
-【请插入功能界面截图二】\\[3cm]
-\end{minipage}%
-}
-\caption{【功能模块二】界面}
-\label{fig:func2}
-\end{figure}
-
-\textbf{功能说明}：【描述该功能的作用】
-
-\textbf{操作步骤}：
-\begin{enumerate}
-    \item 【步骤1】
-    \item 【步骤2】
-    \item 【步骤3】
-\end{enumerate}
-
-% ----- 5.5 功能模块三 -----
-\subsection{【功能模块三】}
-
-\begin{figure}[htbp]
-\centering
-\fbox{%
-\begin{minipage}{0.7\textwidth}
-\centering
-\vspace{3cm}
-【请插入功能界面截图三】\\[3cm]
-\end{minipage}%
-}
-\caption{【功能模块三】界面}
-\label{fig:func3}
-\end{figure}
-
-\textbf{功能说明}：【描述该功能的作用】
-
-\textbf{操作步骤}：
-\begin{enumerate}
-    \item 【步骤1】
-    \item 【步骤2】
-    \item 【步骤3】
-\end{enumerate}
-
-% （可根据需要继续添加更多功能模块，建议至少 3--5 个核心功能）
-
-% ============================================================
-\section{常见问题与故障排除}
-
-\begin{longtable}{|p{3.5cm}|p{4cm}|p{5.5cm}|}
-\hline
-\textbf{问题} & \textbf{原因} & \textbf{解决方法} \\
-\hline
-无法登录系统   & 用户名或密码错误  & 检查输入是否正确，或联系管理员重置密码 \\
-\hline
-页面加载缓慢   & 网络延迟或数据量过大 & 检查网络连接，清理浏览器缓存 \\
-\hline
-数据保存失败   & 必填项未填写完整    & 检查表单是否有红色提示，补充必填信息 \\
-\hline
-【其他问题】   & 【可能原因】        & 【解决方法】 \\
-\hline
+\subsection{页面布局}
+\begin{longtable}{|p{3cm}|p{10cm}|}\hline
+标题栏 & 软件名称、设备型号、模型版本 \\\hline
+硬件监控 & GPU/CPU/内存/温度/功耗/磁盘，每 5 秒刷新 \\\hline
+上传区 & 点击/拖拽/粘贴图片 \\\hline
+结果区 & 左：文字列表+置信度 右：可视化标注图片 \\\hline
 \end{longtable}
 
-% ============================================================
-\section*{附录}
+\begin{figure}[H]\centering\includegraphics[width=\textwidth]{../screenshots/01-main-page.png}
+\caption{系统主页面}\end{figure}
 
-\subsection*{附录A：联系方式}
-\begin{longtable}{|p{3cm}|p{10cm}|}
-\hline
-技术支持电话 & 【电话号码】 \\
-\hline
-技术支持邮箱 & 【邮箱地址】 \\
-\hline
-官方网站     & 【网址】 \\
-\hline
+\subsection{上传图片}
+支持三种方式：点击上传、拖拽上传、Ctrl+V 剪贴板粘贴。
+
+\subsection{查看识别结果}
+上传后左侧显示文字列表及置信度（绿>0.9 / 黄0.7-0.9 / 红<0.7），右侧显示标注图片。
+
+\begin{figure}[H]\centering\includegraphics[width=\textwidth]{../screenshots/03-ocr-result.png}
+\caption{OCR 识别结果页面}\end{figure}
+
+\section{API 接口使用指南}
+
+\subsection{接口概览}
+\begin{longtable}{|p{2cm}|p{3.5cm}|p{7cm}|}\hline
+POST & /ocr & 上传图片 OCR 识别 \\\hline
+POST & /ocr\_base64 & Base64 图片 OCR \\\hline
+GET & /status & 机器实时状态 \\\hline
+GET & /docs & Swagger API 文档 \\\hline
+GET & / & Web 前端 \\\hline
 \end{longtable}
 
-\subsection*{附录B：更新日志}
-\begin{longtable}{|p{2cm}|p{3cm}|p{8cm}|}
-\hline
-\textbf{版本} & \textbf{日期}      & \textbf{更新内容} \\
-\hline
-V1.0          & YYYY-MM-DD         & 初始版本发布 \\
-\hline
-\end{longtable}
+\subsection{POST /ocr — 图片文字识别}
+\begin{lstlisting}[language=bash]
+curl -X POST http://192.168.3.110:8899/ocr -F "file=@test.png"
+\end{lstlisting}
+
+响应字段：texts（文字列表）、scores（置信度）、count（文本数）、vis\_base64（标注图片 Base64）。
+
+\begin{figure}[H]\centering\includegraphics[width=\textwidth]{../screenshots/02-api-docs.png}
+\caption{Swagger API 文档页面}\end{figure}
+
+\section{命令行使用}
+\begin{lstlisting}[language=bash]
+cd ~/ocrcplus
+./PaddleOCR/deploy/cpp_infer/build/ppocr ocr \
+  --input ./models/test.png \
+  --text_detection_model_dir ./models/PP-OCRv5_mobile_det_infer \
+  --text_detection_model_name PP-OCRv5_mobile_det \
+  --text_recognition_model_dir ./models/PP-OCRv5_mobile_rec_infer \
+  --text_recognition_model_name PP-OCRv5_mobile_rec \
+  --use_doc_orientation_classify false \
+  --use_doc_unwarping false --use_textline_orientation false \
+  --device gpu --save_path ./output/
+\end{lstlisting}
+
+\section{压力测试}
+\begin{lstlisting}[language=bash]
+cd ~/ocrcplus && source venv/bin/activate
+python stress_test.py 2 5   # 并发2, 总请求5
+\end{lstlisting}
+
+\section{常见问题}
+\begin{enumerate}
+\item \textbf{CPU 模式崩溃}：ARM 不支持 Intel MKL，使用 \texttt{--device gpu}。
+\item \textbf{编译 OOM}：使用 \texttt{make -j2}，确保 Swap 已启用。
+\item \textbf{模型名称不匹配}：确保 \texttt{--text\_detection\_model\_name} 与实际模型一致。
+\end{enumerate}
 
 \end{document}
