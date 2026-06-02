@@ -1,0 +1,18 @@
+# 编译产物
+build/
+build_trt/
+
+# 预编译推理库
+paddle_inference_install_dir/
+*.tgz
+
+# 备份
+backup/
+backup_full/
+
+# Paddle 源码
+Paddle/
+
+# 系统/临时文件
+机器状况详细报告.md
+\001\344\261\002@\300\263\a@8
