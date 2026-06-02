@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ocrplus — 焊机参数 OCR 识别系统</title>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --card: #111827;
+    --border: #1e293b;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #f59e0b;
+    --green: #10b981;
+    --blue: #3b82f6;
+    --red: #ef4444;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    line-height: 1.7;
+  }
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* Hero */
+  .hero {
+    text-align: center;
+    padding: 4rem 0 2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 3rem;
+  }
+  .hero h1 {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), #fbbf24, #f59e0b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero .subtitle {
+    font-size: 1.2rem;
+    color: var(--muted);
+    margin-top: 0.8rem;
+  }
+  .hero .badges {
+    margin-top: 1.5rem;
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+  .badge-jetson  { background: #065f46; color: #6ee7b7; }
+  .badge-cuda   { background: #1e3a5f; color: #93c5fd; }
+  .badge-python { background: #1e293b; color: #facc15; }
+  .badge-cpp    { background: #312e81; color: #a5b4fc; }
+
+  /* Sections */
+  section { margin-bottom: 3rem; }
+  h2 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  h2 .icon { font-size: 1.4rem; }
+  h3 { font-size: 1.1rem; margin: 1.2rem 0 0.5rem; color: var(--accent); }
+  p { color: var(--muted); margin-bottom: 0.8rem; }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* Architecture diagram */
+  .arch-flow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+    padding: 2rem 1rem;
+    background: var(--card);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin: 1rem 0;
+  }
+  .arch-node {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    text-align: center;
+    min-width: 100px;
+  }
+  .arch-node .emoji { font-size: 2rem; }
+  .arch-node .label { font-size: 0.85rem; font-weight: 600; color: var(--text); margin-top: 0.3rem; }
+  .arch-node .detail { font-size: 0.72rem; color: var(--muted); margin-top: 0.15rem; }
+  .arch-arrow { font-size: 1.5rem; color: var(--accent); font-weight: bold; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 0.6rem 0.9rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--text); font-weight: 700; background: var(--card); }
+  td { color: var(--muted); }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  /* Code block */
+  pre {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem 1.2rem;
+    overflow-x: auto;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace;
+  }
+  code { font-family: "JetBrains Mono", "Fira Code", "Consolas", monospace; font-size: 0.88em; }
+
+  /* Feature grid */
+  .features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .feature-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.2rem;
+  }
+  .feature-card .icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+  .feature-card .title { font-weight: 700; color: var(--text); }
+  .feature-card .desc { font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem; }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-top: 3rem;
+  }
+
+  @media (max-width: 600px) {
+    .hero h1 { font-size: 2rem; }
+    .arch-flow { flex-direction: column; }
+    .arch-arrow { transform: rotate(90deg); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Hero -->
+  <div class="hero">
+    <h1>⚡ ocrplus</h1>
+    <p class="subtitle">焊机参数 OCR 智能识别系统 — Jetson Orin Nano 边端部署</p>
+    <div class="badges">
+      <span class="badge badge-jetson">Jetson Orin Nano</span>
+      <span class="badge badge-cuda">CUDA 12.6</span>
+      <span class="badge badge-python">FastAPI</span>
+      <span class="badge badge-cpp">C++ PaddleOCR</span>
+    </div>
+  </div>
+
+  <!-- 应用场景 -->
+  <section>
+    <h2><span class="icon">🎯</span> 应用场景</h2>
+    <p>
+      本系统专为<strong>工业焊机参数实时识别</strong>设计。在焊接作业中，焊机表头的电流、电压、
+      焊接速度等参数需要实时监控和记录。通过在焊机表头安装 <strong>ESP32 + 摄像头模组</strong>，
+      定时拍摄表头屏幕，将图像通过 WiFi 回传至 Jetson Orin Nano 上运行的 OCR API 服务，
+      自动识别并结构化输出焊机参数。
+    </p>
+
+    <!-- 架构图 -->
+    <div class="arch-flow">
+      <div class="arch-node">
+        <div class="emoji">📷</div>
+        <div class="label">ESP32-CAM</div>
+        <div class="detail">焊机表头采集</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="emoji">📡</div>
+        <div class="label">WiFi / HTTP</div>
+        <div class="detail">实时图片回传</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="emoji">🖥️</div>
+        <div class="label">Jetson Orin Nano</div>
+        <div class="detail">OCR API 服务</div>
+      </div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node">
+        <div class="emoji">📊</div>
+        <div class="label">结构化数据</div>
+        <div class="detail">JSON 参数输出</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 特性 -->
+  <section>
+    <h2><span class="icon">✨</span> 核心特性</h2>
+    <div class="features">
+      <div class="feature-card">
+        <div class="icon">🚀</div>
+        <div class="title">C++ 推理引擎</div>
+        <div class="desc">Paddle Inference C++ 原生推理，GPU FP32 加速，单图 ~5.5s</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔌</div>
+        <div class="title">RESTful API</div>
+        <div class="desc">FastAPI 构建，支持文件上传和 Base64 两种识别方式</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🖥️</div>
+        <div class="title">硬件监控</div>
+        <div class="desc">Web 前端实时展示 GPU/CPU/内存/温度/功耗（jtop）</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⚡</div>
+        <div class="title">TensorRT 支持</div>
+        <div class="desc">源码级 TRT FP16/FP32 模式切换，动态 batch 优化</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📱</div>
+        <div class="title">ESP32 适配</div>
+        <div class="desc">轻量 HTTP 上传协议，适配 ESP32-CAM 低功耗采集终端</div>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📦</div>
+        <div class="title">一键部署</div>
+        <div class="desc">start.sh 一键启动，自动 GPU 预热，即开即用</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 硬件平台 -->
+  <section>
+    <h2><span class="icon">🖥️</span> 运行平台</h2>
+    <table>
+      <tr><th>项目</th><th>参数</th></tr>
+      <tr><td>设备</td><td>NVIDIA Jetson Orin Nano Super (P3767-0005)</td></tr>
+      <tr><td>CPU</td><td>6 核 ARM Cortex-A78AE @ 1.5GHz</td></tr>
+      <tr><td>GPU</td><td>Ampere GA10B, 1024 CUDA Cores, SM 8.7</td></tr>
+      <tr><td>内存</td><td>8GB LPDDR5（CPU/GPU 统一内存）</td></tr>
+      <tr><td>系统</td><td>JetPack 6.0 / L4T R36.5.0 / Ubuntu 22.04</td></tr>
+      <tr><td>CUDA</td><td>12.6.68 | cuDNN 9.3.0 | TensorRT 10.3.0.30</td></tr>
+    </table>
+  </section>
+
+  <!-- 快速开始 -->
+  <section>
+    <h2><span class="icon">🏁</span> 快速开始</h2>
+
+    <h3>1. 克隆仓库</h3>
+    <pre>git clone https://github.com/tydfgt/ocrapi.git
+cd ocrapi</pre>
+
+    <h3>2. 安装依赖</h3>
+    <pre>source venv/bin/activate
+pip install -r requirements.txt</pre>
+
+    <h3>3. 启动服务</h3>
+    <pre>bash start.sh
+# 访问 http://[设备IP]:8899</pre>
+
+    <h3>4. ESP32 端调用示例</h3>
+    <pre># ESP32 拍照后通过 HTTP POST 上传
+curl -X POST http://192.168.3.110:8899/ocr \
+  -F "file=@weld_params.jpg"</pre>
+  </section>
+
+  <!-- API -->
+  <section>
+    <h2><span class="icon">🔌</span> API 接口</h2>
+    <table>
+      <tr><th>方法</th><th>路径</th><th>说明</th></tr>
+      <tr><td><code>POST</code></td><td><code>/ocr</code></td><td>上传图片文件，返回 OCR 识别结果（JSON）</td></tr>
+      <tr><td><code>POST</code></td><td><code>/ocr_base64</code></td><td>Base64 编码图片识别</td></tr>
+      <tr><td><code>GET</code></td><td><code>/status</code></td><td>实时硬件状态（GPU/CPU/RAM/温度/功耗/风扇）</td></tr>
+      <tr><td><code>GET</code></td><td><code>/health</code></td><td>健康检查</td></tr>
+      <tr><td><code>GET</code></td><td><code>/</code></td><td>Web 管理面板（含硬件监控）</td></tr>
+    </table>
+  </section>
+
+  <!-- OCR 返回示例 -->
+  <section>
+    <h2><span class="icon">📋</span> OCR 返回格式</h2>
+    <pre>{
+  "success": true,
+  "elapsed_ms": 5523,
+  "results": [
+    {
+      "text": "焊接电流: 120A",
+      "confidence": 0.987,
+      "box": [[12, 34], [200, 34], [200, 68], [12, 68]]
+    },
+    {
+      "text": "电弧电压: 22.5V",
+      "confidence": 0.965,
+      "box": [[12, 78], [200, 78], [200, 112], [12, 112]]
+    }
+  ],
+  "visualization": "base64..."
+}</pre>
+  </section>
+
+  <!-- 项目结构 -->
+  <section>
+    <h2><span class="icon">📁</span> 项目结构</h2>
+    <pre>ocrcplus/
+├── server.py              # FastAPI 主服务
+├── start.sh               # 一键启动脚本
+├── stress_test.py         # 并发压力测试
+├── static/index.html      # Web 管理前端
+├── models/                # PP-OCRv5 Mobile 模型
+├── PaddleOCR/             # PaddleOCR C++ 推理源码
+├── docs/                  # GitHub Pages 文档
+├── 软著模板/              # 软件著作权申请材料
+└── requirements.txt       # Python 依赖</pre>
+  </section>
+
+  <!-- 视频演示 -->
+  <section>
+    <h2><span class="icon">🎬</span> 演示</h2>
+    <p>Web 管理面板 — 支持拖拽/粘贴上传，实时硬件监控，OCR 结果可视化：</p>
+    <p>👉 <a href="http://192.168.3.110:8899/" target="_blank">在线演示（内网）</a></p>
+  </section>
+
+  <!-- 相关资源 -->
+  <section>
+    <h2><span class="icon">📚</span> 相关资源</h2>
+    <ul style="color: var(--muted); padding-left: 1.2rem;">
+      <li><a href="https://github.com/tydfgt/ocrapi">GitHub 仓库</a> — 完整源码</li>
+      <li><a href="https://github.com/tydfgt/ocrapi/blob/main/Jetson_Orin_Nano_PaddleOCR_C++_%E9%83%A8%E7%BD%B2%E6%95%99%E7%A8%8B.md">部署教程</a> — Jetson Orin Nano 从零部署指南</li>
+      <li><a href="https://github.com/PaddlePaddle/PaddleOCR">PaddleOCR</a> — 百度飞桨 OCR 开源项目</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>© 2026 ocrplus · Powered by PaddleOCR & Jetson Orin Nano · <a href="https://github.com/tydfgt/ocrapi">GitHub</a></p>
+  </footer>
+
+</div>
+
+</body>
+</html>

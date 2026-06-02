@@ -1,21 +1,29 @@
-# PaddleOCR C++ Inference — Jetson Orin Nano
+# ⚡ ocrplus — 焊机参数 OCR 智能识别系统
 
-> **边端 OCR 智能文字识别系统** | PP-OCRv5 Mobile | FastAPI + C++ | GPU FP32 ~5.5s/图
+> **ESP32 拍照 → Jetson Orin Nano OCR → 结构化焊机参数** | PP-OCRv5 Mobile | FastAPI + C++ | GPU FP32 ~5.5s/图
 
 <p align="center">
+  <a href="https://tydfgt.github.io/ocrapi"><img src="https://img.shields.io/badge/GitHub%20Pages-在线文档-blue" alt="pages"></a>
   <img src="https://img.shields.io/badge/platform-Jetson%20Orin%20Nano-green" alt="platform">
   <img src="https://img.shields.io/badge/JetPack-6.0-blue" alt="jetpack">
   <img src="https://img.shields.io/badge/CUDA-12.6.68-brightgreen" alt="cuda">
   <img src="https://img.shields.io/badge/TensorRT-10.3.0.30-orange" alt="tensorrt">
-  <img src="https://img.shields.io/badge/Python-3.10.12-blue" alt="python">
   <img src="https://img.shields.io/badge/license-Apache%202.0-lightgrey" alt="license">
 </p>
+
+> 📖 **GitHub Pages**: [https://tydfgt.github.io/ocrapi](https://tydfgt.github.io/ocrapi)
 
 ---
 
 ## 项目简介
 
-基于 **PaddleOCR PP-OCRv5 Mobile** 模型，在 **NVIDIA Jetson Orin Nano Super (8GB)** 边缘设备上实现 C++ 高性能 OCR 文字识别，并提供 FastAPI Web 服务 + 硬件监控面板。
+**焊机参数 OCR 智能识别系统** — 在焊接作业中，通过 ESP32 + 摄像头实时采集焊机表头图像，WiFi 回传至 Jetson Orin Nano 边端 OCR API，自动识别电流、电压、焊接速度等参数并结构化输出。
+
+```
+ESP32-CAM → WiFi → HTTP POST /ocr → Jetson Orin Nano → JSON 焊机参数
+```
+
+基于 **PaddleOCR PP-OCRv5 Mobile** 模型，在 **NVIDIA Jetson Orin Nano Super (8GB)** 上实现 C++ 高性能推理。
 
 - **推理引擎**: Paddle Inference C++ (GPU FP32 / TensorRT FP16)
 - **模型**: PP-OCRv5 Mobile — 检测 4.8MB + 识别 17MB（超轻量）
@@ -101,7 +109,24 @@ source venv/bin/activate && python server.py
 | `GET` | `/status` | 实时硬件状态（GPU/CPU/RAM/温度/功耗） |
 | `GET` | `/health` | 健康检查 |
 
-### 4. 压力测试
+### 4. ESP32 端调用
+
+ESP32-CAM 拍照后通过 HTTP 上传到 OCR API：
+
+```cpp
+// ESP32 Arduino 示例
+HTTPClient http;
+http.begin("http://192.168.3.110:8899/ocr");
+http.addHeader("Content-Type", "image/jpeg");
+
+camera_fb_t *fb = esp_camera_fb_get();
+int code = http.POST(fb->buf, fb->len);
+esp_camera_fb_return(fb);
+
+String result = http.getString();  // JSON OCR 结果
+```
+
+### 5. 压力测试
 
 ```bash
 # 10 并发，总共 50 个请求
@@ -122,6 +147,8 @@ ocrcplus/
 ├── stress_test.py             # 并发压力测试工具
 ├── requirements.txt           # Python 依赖
 ├── .gitignore
+├── docs/
+│   └── index.html             # GitHub Pages 项目主页
 ├── static/
 │   └── index.html             # Web 前端 (暗色主题 + 硬件监控)
 ├── models/
